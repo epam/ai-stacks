@@ -1,0 +1,28 @@
+parameters:
+- name: component.kubeflow
+  component: kubeflow-pipelines
+  parameters:
+  - name: version
+    value: 1.3.0
+  - name: pipeline.multiUser
+    value: true
+    brief: | 
+      Note: Multi User featuring should correlate with DEPLOYMENT flag
+      For now DEPLOYMENT is just hard coded for Multi User case
+      see https://github.com/kubeflow/pipelines/issues/5117
+
+- name: component.bucket
+  component: kubeflow-pipelines
+  parameters:
+  - name: host
+    value: minio.${component.minio.namespace}.svc.cluster.local
+  - name: port
+    value: "${component.minio.service.port}"
+  - name: endpoint
+    value: http://${component.bucket.host}:9000
+  - name: accessKey
+    value: ${component.minio.accessKey}
+  - name: secretKey
+    value: ${component.minio.secretKey}
+  - name: name
+    value: pipelines

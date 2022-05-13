@@ -1,0 +1,42 @@
+parameters:
+- name: component.minio
+  parameters:
+  - name: accessKey
+    brief: |
+      Master access key for minio 
+      Tip: use random value
+    fromEnv: MINIO_ACCESS_KEY
+  - name: secretKey
+    brief: |
+      Master secret key for minio
+      Tip: use random value
+    fromEnv: MINIO_SECRET_KEY
+  - name: namespace
+    value: kubeflow-data
+  - name:  volumeType
+    fromEnv: KUBERNETES_STORAGE_CLASS
+  - name: storageSize
+    value: 20Gi
+  - name: requests.memory
+    value: 4Gi
+  - name: service.port
+    value: 9000
+
+  - name: docker
+    parameters:
+    - name: image
+      value: docker.io/minio/minio
+    - name: tag
+      value: RELEASE.2020-11-19T23-48-16Z
+
+- name: component.ingress
+  parameters:
+  - name: protocol
+    value: https
+  - name: host
+    component: minio
+    value: minio.${dns.domain}
+  - name: fileSize
+    # empty: allow
+    brief: Max filesize to upload (nginx specific)
+    value: 640m

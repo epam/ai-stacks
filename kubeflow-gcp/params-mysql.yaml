@@ -1,0 +1,40 @@
+parameters:
+- name: component.mysql
+  parameters:
+  - name: namespace
+    value: kubeflow-data
+  - name: namespace
+    component: mysql-argo
+    value: "argo"
+  - name: rootPassword
+    brief: MySQL root password (all databases)
+    fromEnv: COMPONENT_MYSQL_ROOT_PASSWORD
+  - name: user
+    brief: MySQL user name (all databases)
+    fromEnv: COMPONENT_MYSQL_USER
+    default: mysql
+  - name: password
+    brief: MySQL user password (all databases)
+    fromEnv: COMPONENT_MYSQL_PASSWORD
+  - name: database
+    component: mysql-metadata
+    value: metadb
+  - name: database
+    component: mysql-pipeline
+    value: mlpipeline
+  - name: database
+    component: mysql-katib
+    value: katib
+  - name: database
+    component: mysql-argo
+    value: argo
+  - name: volumeSize
+    value: 8Gi
+  - name: docker
+    parameters:
+    - name: registry
+      value: docker.io
+    - name: repository
+      value: bitnami/mysql
+    - name: tag
+      value: 8.0.22-debian-10-r23

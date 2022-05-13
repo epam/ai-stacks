@@ -1,0 +1,12 @@
+parameters:
+- name: component.ingress.protocol
+  value: https
+- name: component.ingress.class
+  brief: |
+    Name of the existing Kubenretes ingress class
+    Note, this command may not show results: `kubectl get ingressclass`
+    because ingress controller may implicitly declare one. 
+    
+    See more: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class
+  default: nginx
+  fromEnv: KUBERNETES_INGRESS_CLASS

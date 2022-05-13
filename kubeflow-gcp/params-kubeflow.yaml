@@ -1,0 +1,35 @@
+parameters:
+- name: component.kubeflow
+  parameters:
+  - name: name
+    value: kubeflow
+  - name: namespace
+    value: kubeflow
+  - name: version
+    value: v1.2.0
+
+- name: component.kubeflow.authn
+  component: kubeflow-authn
+  parameters:
+  - name: oidcProvider
+    value: ${component.ingress.protocol}://auth.${dns.domain}
+  - name: oidcRedirectURI
+    value: https://${component.kubeflow.name}.${dns.domain}/login/oidc
+  - name: oidcSecret
+    brief: | 
+      OpenID connect client mutual trust secret between Dex and Argo
+      tip: you can use random values
+    fromEnv: KUBEFLOW_OIDC_CLIENT_SECRET
+  - name: sessionMaxAge
+    value: 86400
+  - name: volumeSize
+    value: 10Gi
+
+- name: component.kubeflow.jupyter.workspaceVolume.storageClass
+  component: kubeflow-jupyter
+  brief: |
+    Configuration for storage class for the notebooks
+    see: https://github.com/kubeflow/manifests/blob/v1.1.0/jupyter/jupyter-web-app/base/configs/spawner_ui_config.yaml#L68
+  # default: '{none}'
+  value: "${component.storage-class.name}"
+

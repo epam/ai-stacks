@@ -1,0 +1,24 @@
+parameters:
+- name: projectId
+  fromEnv: GOOGLE_PROJECT
+- name: stateBucketName
+  fromEnv: HUB_STATE_BUCKET
+- name: hubStackName
+  fromEnv: HUB_STACK_NAME
+- name: dns.name
+  fromEnv: HUB_STACK_NAME
+- name: dns.domain
+  fromEnv: HUB_DOMAIN_NAME
+- name: component.gke.name
+  fromEnv: GOOGLE_GKE_CLUSTER
+- name: component.gke.zone
+  fromEnv: GOOGLE_ZONE
+- name: component.storage-class.name
+  brief: |
+    Name of the existing Kubenretes storage class.
+    This slass will be used to provision PVs for Kubeflow such and notebooks and databases
+
+    To check for available storage classes run: `kubectl get sc`
+
+    See more: https://kubernetes.io/docs/concepts/storage/storage-classes/
+  fromEnv: KUBERNETES_STORAGE_CLASS

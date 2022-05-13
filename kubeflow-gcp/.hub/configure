@@ -1,0 +1,49 @@
+#!/bin/bash +e
+
+ident() {
+  sed 's/^/  /'
+}
+
+KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
+export KUBECONFIG
+
+if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
+  echo "Configuring GKE cluster name"
+  echo "* Using GCP zone: $zone"
+  zone="$(dotenv get GOOGLE_ZONE)"
+
+  echo "* List of GKE clusters"
+  gcloud container clusters list --zone "$zone" | ident | color g
+  ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' -random -empty
+  cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
+
+  # shellcheck disable=SC2155
+  export KUBECONFIG="$(dirname "$0")/.kubeconfig"
+
+  echo "* Fetching kubeconfig credentials"
+  gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
+  dotenv set "HUB_KUBECONFIG" "$(files abspath "$KUBECONFIG")"
+fi
+
+
+if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
+  echo "* Configuring storage class for kubernetes"
+  kubectl get sc | ident |  color g
+  echo 
+  is_defult="storageclass.kubernetes.io/is-default-class"
+  sc=$(kubectl get storageclass -o json \
+      |     jq -cMr --arg "is_default" "$is_defult" '.items[].metadata | select(.annotations[$is_default]=="true").name | select(.)')
+
+  ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
+fi
+
+if ! dotenv contains "USER"; then
+  echo "* Getting user account from gcloud"
+  set -x
+  user="$(gcloud --format=json auth list | jq -cMr --arg u "$USER" '.[] | [select(.status == "ACTIVE"), {account: $u}] | first | .account')"
+  if test -n "$user"; then
+    ask env "USER" --message 'Kubeflow admin username' --suggest "$user" --suggest-tag "gcloud" -env -random
+  else
+    ask env "USER" --message 'Kubeflow admin username' -random --suggest "$(whoami)"
+  fi
+fi

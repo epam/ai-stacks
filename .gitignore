@@ -1,0 +1,6 @@
+.hub/
+*.state
+*.elaborate
+*.kubeconfig
+.env
+components/
