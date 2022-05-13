@@ -1,0 +1,42 @@
+version: 1
+kind: stack
+meta:
+  name: GKE cluster with Istio
+
+components:
+- name: kubernetes
+  source:
+    dir: components/gke-gcloud
+    git:
+      remote: https://github.com/agilestacks/google-components.git
+      subDir: gke-gcloud
+- name: kubernetes-node-pool
+  source:
+    dir: components/gke-gcloud-node-pool
+    git:
+      remote: https://github.com/agilestacks/google-components.git
+      subDir: gke-gcloud-node-pool
+  depends: [kubernetes]
+
+extensions:
+  include:
+  - params.yaml
+  init:
+  - gcp  
+  configure:
+  - gcp
+  - env
+
+requires:
+- gcp
+
+lifecycle:
+  verbs:
+  - deploy
+  - undeploy
+  order:
+  - kubernetes
+  - kubernetes-node-pool
+
+outputs:
+- name: component.gke.url
