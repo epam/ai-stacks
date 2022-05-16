@@ -186,7 +186,6 @@ components:
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
       subDir: kubeflow-pipeline
-      ref: argo-v3
   depends:
   - kubeflow-profiles
   - kubeflow-metadata

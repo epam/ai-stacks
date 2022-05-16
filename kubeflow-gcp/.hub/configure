@@ -4,8 +4,13 @@ ident() {
   sed 's/^/  /'
 }
 
-KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
-export KUBECONFIG
+if ! dotenv contains "HUB_KUBECONFIG"; then
+  domain="$(dotenv get "HUB_DOMAIN_NAME")"
+  dotenv set "HUB_KUBECONFIG" "$(files abspath ".hub/env/$domain.kubeconfig")"
+fi
+
+# shellcheck disable=SC2155
+export KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
 
 if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
   echo "Configuring GKE cluster name"
@@ -17,12 +22,8 @@ if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
   ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' -random -empty
   cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
 
-  # shellcheck disable=SC2155
-  export KUBECONFIG="$(dirname "$0")/.kubeconfig"
-
   echo "* Fetching kubeconfig credentials"
   gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
-  dotenv set "HUB_KUBECONFIG" "$(files abspath "$KUBECONFIG")"
 fi
 
 
@@ -39,11 +40,17 @@ fi
 
 if ! dotenv contains "USER"; then
   echo "* Getting user account from gcloud"
-  set -x
   user="$(gcloud --format=json auth list | jq -cMr --arg u "$USER" '.[] | [select(.status == "ACTIVE"), {account: $u}] | first | .account')"
   if test -n "$user"; then
-    ask env "USER" --message 'Kubeflow admin username' --suggest "$user" --suggest-tag "gcloud" -env -random
+    ask env "USER" \
+      --message 'Kubeflow admin username' \
+      --suggest "$user" \
+      --suggest-tag "gcloud" \
+      --priority "parameter hubstate history suggested default empty"
   else
-    ask env "USER" --message 'Kubeflow admin username' -random --suggest "$(whoami)"
+    ask env "USER" \
+      --message 'Kubeflow admin username' \
+      --suggest "$(whoami)" \
+      --priority "parameter hubstate history suggested default empty"
   fi
 fi

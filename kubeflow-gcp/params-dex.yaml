@@ -5,16 +5,13 @@ parameters:
     value: kube-system
   - name: authproxy.cookieExpire
     value: "'24h0m0s'"  
-  - name: passwordDb
-    empty: allow
-    parameters:
-    - name: email
-      brief: Kubeflow admin user name
-      fromEnv: USER
-      default: admin@kubeflow.local
-    - name: password
-      brief: Kubeflow admin user password
-      fromEnv: DEX_PASSWORD
+  - name: passwordDb.email
+    brief: Kubeflow admin user name
+    fromEnv: USER
+    default: admin@kubeflow.local
+  - name: passwordDb.password
+    brief: Kubeflow admin user password
+    fromEnv: DEX_PASSWORD
   # - name: ldap
   #   empty: allow
   #   parameters:
