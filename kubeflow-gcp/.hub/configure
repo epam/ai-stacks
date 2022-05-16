@@ -1,4 +1,4 @@
-#!/bin/bash +e
+#!/bin/bash -e
 
 ident() {
   sed 's/^/  /'
@@ -18,25 +18,25 @@ if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
   zone="$(dotenv get GOOGLE_ZONE)"
 
   echo "* List of GKE clusters"
-  gcloud container clusters list --format="table[box](name:sort=1, zone:label=zone, status)" | ident | color g
-  ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' -random -empty
-  cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
-
-  echo "* Fetching kubeconfig credentials"
-  zone="$(gcloud container clusters list --format json | jq -cMr --arg cluster "$cluster_name" -cMr 'first|.zone | select(.)')"
-  if test -z "$zone"; then
-    gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
-    echo "Adjusting region and zone from cluster: $cluster_name"
-    dotenv set "$GOOGLE_ZONE" "$zone"
-    dotenv set "$GOOGLE_REGION" "$(echo "$zone" | cut -d- -f1-2)"
-  else
-    echo "Error: cluster $cluster_name doesn't have zone"
-    echo "We do not support this yet. Please contact our support team"
-    exit 1
-  fi
-
+  gcloud container clusters list --format="table[box](name,zone,status,createTime)"  --sort-by=~createTime --limit=12 | ident | color g
+  suggest="$(gcloud container clusters list --format="value(name)" --sort-by=~createTime --limit=1)"
+  ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' \
+    --suggest "$suggest" --suggest-tag "gcloud" -random -empty
 fi
 
+cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
+echo "* Fetching kubeconfig credentials"
+zone="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
+if test -n "$zone"; then
+  gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
+  echo "Taking region and zone from cluster: $zone"
+  dotenv set "GOOGLE_ZONE" "$zone"
+  dotenv set "GOOGLE_REGION" "$(echo "$zone" | cut -d- -f1-2)"
+else
+  echo "Error: cluster $cluster_name doesn't have zone"
+  echo "We do not support this yet. Please contact our support team"
+  exit 1
+fi
 
 if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   echo "* Configuring storage class for kubernetes"
