@@ -4,3 +4,4 @@
 *.kubeconfig
 .env
 components/
+components

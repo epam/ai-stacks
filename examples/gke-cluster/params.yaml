@@ -1,6 +1,4 @@
 parameters:
-  - name: hub.deployedBy
-    fromEnv: USER
   - name: projectId
     fromEnv: GOOGLE_PROJECT
   - name: stateBucketName

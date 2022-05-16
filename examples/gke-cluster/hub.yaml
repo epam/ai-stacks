@@ -10,12 +10,14 @@ components:
     git:
       remote: https://github.com/agilestacks/google-components.git
       subDir: gke-gcloud
+      ref: noingress
 - name: kubernetes-node-pool
   source:
     dir: components/gke-gcloud-node-pool
     git:
       remote: https://github.com/agilestacks/google-components.git
       subDir: gke-gcloud-node-pool
+      ref: noingress
   depends: [kubernetes]
 
 extensions:
