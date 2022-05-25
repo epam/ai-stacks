@@ -18,7 +18,7 @@ if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
   zone="$(dotenv get GOOGLE_ZONE)"
 
   echo "* List of GKE clusters"
-  gcloud container clusters list --format="table[box](name,zone,status,createTime)"  --sort-by=~createTime --limit=12 | ident | color g
+  gcloud container clusters list --format="table(name,zone,status,createTime)"  --sort-by=~createTime --limit=12 | ident | color g
   suggest="$(gcloud container clusters list --format="value(name)" --sort-by=~createTime --limit=1)"
   ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' \
     --suggest "$suggest" --suggest-tag "gcloud" -random -empty
@@ -49,6 +49,18 @@ if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
 fi
 
+echo "* Checking presence of GCE Ingress"
+gce_ingress_enabled="$(gcloud container clusters describe somber-chaac-266 --zone europe-west4-b --format="json" | jq --arg addon "httpLoadBalancing"  '.addonsConfig | select($addon) | {enabled: true, disabled: false} +  .[$addon] | .enabled')"
+if test "$gce_ingress_enabled" = "true"; then
+  echo "  Ingress GCE addon has been enabled (httpLoadBalancing)"
+  ask env "KUBERNETES_INGRESS_CLASS" \
+    --suggest "gce" \
+    --suggest-tag "gcloud" \
+    --priority "parameter hubstate history suggested default empty"
+else
+  echo "  Ingress GCE addon has been disabled (httpLoadBalancing)"
+fi
+
 if ! dotenv contains "USER"; then
   echo "* Getting user account from gcloud"
   user="$(gcloud --format=json auth list | jq -cMr --arg u "$USER" '.[] | [select(.status == "ACTIVE"), {account: $u}] | first | .account')"
@@ -65,3 +77,7 @@ if ! dotenv contains "USER"; then
       --priority "parameter hubstate history suggested default empty"
   fi
 fi
+
+echo "Setting OpenID connect application secrets"
+ask --non-interactive env "ARGO_OIDC_CLIENT_SECRET" +random -empty
+ask --non-interactive env "KUBEFLOW_OIDC_CLIENT_SECRET" +random -empty
