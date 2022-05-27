@@ -25,13 +25,16 @@ if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
 fi
 
 cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
-echo "* Fetching kubeconfig credentials"
+echo "* Fetching cluster $cluster_name kubeconfig"
 zone="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
 if test -n "$zone"; then
   gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
   echo "Taking region and zone from cluster: $zone"
-  dotenv set "GOOGLE_ZONE" "$zone"
-  dotenv set "GOOGLE_REGION" "$(echo "$zone" | cut -d- -f1-2)"
+  GOOGLE_ZONE="$zone"
+  GOOGLE_REGION="$(echo "$zone" | cut -d- -f1-2)"
+  dotenv set "GOOGLE_ZONE" "$GOOGLE_ZONE"
+  dotenv set "GOOGLE_REGION" "$GOOGLE_REGION"
+  export GOOGLE_REGION GOOGLE_ZONE
 else
   echo "Error: cluster $cluster_name doesn't have zone"
   echo "We do not support this yet. Please contact our support team"
@@ -49,14 +52,27 @@ if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
 fi
 
-echo "* Checking presence of GCE Ingress"
-gce_ingress_enabled="$(gcloud container clusters describe somber-chaac-266 --zone europe-west4-b --format="json" | jq --arg addon "httpLoadBalancing"  '.addonsConfig | select($addon) | {enabled: true, disabled: false} +  .[$addon] | .enabled')"
+echo "* Checking cluster for requirements"
+gce_ingress_enabled="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_REGION" --format="json" | jq --arg addon "httpLoadBalancing"  '.addonsConfig | select($addon) | {enabled: true, disabled: false} +  .[$addon] | .enabled')"
 if test "$gce_ingress_enabled" = "true"; then
-  echo "  Ingress GCE addon has been enabled (httpLoadBalancing)"
-  ask env "KUBERNETES_INGRESS_CLASS" \
-    --suggest "gce" \
-    --suggest-tag "gcloud" \
-    --priority "parameter hubstate history suggested default empty"
+  cat << EOF | color e
+Error: It looks like incompatible addon httpLoadBalancing has been enabled
+
+This addon is not compatible with ingress of this stack. 
+We deploy "nginx" instead. This ingress controller allows 
+to more fine grained do customization of ingress hosts 
+that has been required by Kubeflow
+
+You can disable this addon by running and then restart this command:
+
+  gcloud container clusters update "$cluster_name" --zone "$GOOGLE_ZONE" --update-addons HttpLoadBalancing=DISABLED
+
+EOF
+  # echo "  Ingress GCE addon has been enabled (httpLoadBalancing)"
+  # ask env "KUBERNETES_INGRESS_CLASS" \
+  #   --suggest "gce" \
+  #   --suggest-tag "gcloud" \
+  #   --priority "parameter hubstate history suggested default empty"
 else
   echo "  Ingress GCE addon has been disabled (httpLoadBalancing)"
 fi
