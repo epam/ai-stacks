@@ -1,7 +1,7 @@
 version: 1
 kind: stack
 meta:
-  name: GKE cluster with Istio
+  name: GKE cluster
 
 components:
 - name: kubernetes
