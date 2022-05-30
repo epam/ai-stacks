@@ -26,12 +26,11 @@ fi
 
 cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
 echo "* Fetching cluster $cluster_name kubeconfig"
-zone="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
-if test -n "$zone"; then
-  gcloud container clusters get-credentials "$cluster_name" --zone "$zone" | ident || true
+GOOGLE_ZONE="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
+if test -n "$GOOGLE_ZONE"; then
+  gcloud container clusters get-credentials "$cluster_name" --zone "$GOOGLE_ZONE" | ident || true
   echo "Taking region and zone from cluster: $zone"
-  GOOGLE_ZONE="$zone"
-  GOOGLE_REGION="$(echo "$zone" | cut -d- -f1-2)"
+  GOOGLE_REGION="$(echo "$GOOGLE_ZONE" | cut -d- -f1-2)"
   dotenv set "GOOGLE_ZONE" "$GOOGLE_ZONE"
   dotenv set "GOOGLE_REGION" "$GOOGLE_REGION"
   export GOOGLE_REGION GOOGLE_ZONE
@@ -52,8 +51,9 @@ if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
 fi
 
-echo "* Checking cluster for requirements"
-gce_ingress_enabled="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_REGION" --format="json" | jq --arg addon "httpLoadBalancing"  '.addonsConfig | select($addon) | {enabled: true, disabled: false} +  .[$addon] | .enabled')"
+echo "* Checking cluster compatibility requirements"
+gce_ingress_enabled="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" --format="json" \
+| jq --arg addon "httpLoadBalancing"   '.addonsConfig[$addon]|select(.)|{enabled: [(.disabled | not), .enabled?, true|select(.!=null)]|first}')"
 if test "$gce_ingress_enabled" = "true"; then
   cat << EOF | color e
 Error: It looks like incompatible addon httpLoadBalancing has been enabled
@@ -93,7 +93,3 @@ if ! dotenv contains "USER"; then
       --priority "parameter hubstate history suggested default empty"
   fi
 fi
-
-echo "Setting OpenID connect application secrets"
-ask --non-interactive env "ARGO_OIDC_CLIENT_SECRET" +random -empty
-ask --non-interactive env "KUBEFLOW_OIDC_CLIENT_SECRET" +random -empty

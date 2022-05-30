@@ -24,6 +24,7 @@ extensions:
   configure:
     - gcp
     - bin/configure-gke
+    - bin/gen-oidc-secrets
     - kubernetes
     - env
 
@@ -34,9 +35,9 @@ components:
     git:
       remote: https://github.com/agilestacks/google-components.git
       subDir: external-dns
-  scripts:
-    before:
-    - file: .hub/get-gke-creds
+  hooks:
+  - file: .hub/get-gke-creds
+
 - name: cert-manager
   source:
     dir: components/cert-manager
