@@ -26,11 +26,11 @@ parameters:
       default: 1.21
       brief: Version of Kubernetes API
       fromEnv: GKE_KUBERNETES_VERSION
-  - name: addons
-    value: |
-      NetworkPolicy
-      NodeLocalDNS
-      HttpLoadBalancing
+    - name: addons
+      value: |
+        NetworkPolicy
+        NodeLocalDNS
+        HttpLoadBalancing
 
   - name: component.gkeNodePool
     parameters:
