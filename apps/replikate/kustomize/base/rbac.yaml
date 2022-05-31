@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: app
+rules:
+- apiGroups: ["kubeflow.org"]
+  resources: ["profiles", "poddefaults"]
+  verbs: ["create", "get", "list", "update", "patch"]
+- apiGroups: [""]
+  resources: ["namespaces", "limitranges", "secrets"]
+  verbs: ["create", "get", "update", "patch", "list"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  - configmaps/status
+  - configmaps/logs
+  - events
+  - namespaces
+  - namespaces/status
+  - namespaces/logs
+  verbs: ["*"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["gateways", "envoyfilters", "servicerolebindings"]
+  verbs: ["create", "get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: app
+subjects:
+- kind: ServiceAccount
+  name: app
+roleRef:
+  kind: ClusterRole
+  name: app
+  apiGroup: rbac.authorization.k8s.io

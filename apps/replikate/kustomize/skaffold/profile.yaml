@@ -1,0 +1,11 @@
+apiVersion: kubeflow.org/v1
+kind: Profile
+metadata:
+  name: antonskranga
+  finalizers:
+  - profile-finalizer
+spec:
+  owner:
+    kind: User
+    name: antons_kranga@epam.com
+  resourceQuotaSpec: {}

@@ -1,0 +1,31 @@
+---
+version: 1
+kind: component
+meta:
+  name: replikate
+  source:
+    dir: ../replikate
+requires:
+  - kubernetes
+
+parameters:
+- name: component
+  parameters:
+  - name: ingress.protocol
+  - name: ingress.host
+  - name: bucket.accessKey
+  - name: bucket.secretKey
+  - name: bucket.endpoint
+  - name: bucket.region
+  - name: kubeflow.namespace
+    value: kubeflow
+    env: NAMESPACE
+  - name: replikate.image
+    value: gcr.io/superhub/kubeflow/replikate
+  - name: replikate.imageTag
+    value: latest
+
+templates:
+  files:
+  - "*.template"
+  - "templates/*.template"

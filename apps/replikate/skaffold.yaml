@@ -1,0 +1,37 @@
+apiVersion: skaffold/v1
+kind: Config
+# metadata:
+#   name: app-
+build:
+  artifacts:
+  - image: gcr.io/superhub/kubeflow/replikate
+    sync:
+      manual:
+      - src: "src/*.py"
+        dest: /app
+        strip: src/
+  tagPolicy:
+    dateTime:
+      format: 20060102-150405
+deploy:
+  kustomize:
+    path: "kustomize/skaffold"
+profiles:
+- activation:
+  - env: KUBECONFIG=!
+  build:
+    local:
+      useBuildkit: false
+      useDockerCLI: false
+  name: local
+- build:
+    cluster:
+      dockerConfig:
+        path: k8s/dockerconfig.json
+        secretName: replikate-docker
+  name: kaniko
+portForward:
+- resourceType: Deployment
+  resourceName: replikate
+  port: 9229
+  localPort: 9229

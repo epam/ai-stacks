@@ -1,0 +1,7 @@
+kopf
+pykube-ng
+ptvsd
+pydevd
+pyyaml
+Jinja2
+# watchdog

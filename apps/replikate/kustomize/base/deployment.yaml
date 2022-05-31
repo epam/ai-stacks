@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: replikate
+  template:
+    metadata:
+      labels:
+        app: replikate
+    spec:
+      serviceAccountName: app
+      containers:
+      - name: main
+        image: gcr.io/superhub/kubeflow/replikate:20210125-190117
+        imagePullPolicy: Always
+        # ports:
+        #   - containerPort: 9229
+        #     name: ptvsd
+        envFrom:
+        - configMapRef:
+            name: "env"
+        env:
+        - name: MANIFESTS_SOURCE
+          value: $(MANIFESTS)
+        volumeMounts:
+        - name: manifests
+          mountPath: /etc/manifests
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "1"
+          requests:
+            memory: 64Mi
+            cpu: "0.2"
+      volumes:
+      - name: manifests
+        configMap:
+          name: manifests

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kubeflow
+namePrefix: "dev-replikate-"
+commonLabels:
+  app.kubernetes.io/managed-by: skaffold
+  app.kubernetes.io/instance: dev-replikate
+
+bases:
+- ../base
+
+resources:
+  - profile.yaml
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+configMapGenerator:
+- name: env
+  behavior: merge
+  literals:
+  - REMOTE_DEBUG="disabled"
+  - INSTANCE_ID="dev-replikate"
+
+- name: manifests
+  behavior: merge
+  files:
+  - configs/argo-artifacts.yaml

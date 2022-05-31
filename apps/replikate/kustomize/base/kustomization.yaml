@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# commonLabels:
+#   app: replikate
+# namePrefix: "replikate-"
+resources:
+- deployment.yaml
+- rbac.yaml
+
+configMapGenerator:
+- name: env
+  literals:
+  - INSTANCE_ID=replikate
+  - CONFIG_DIR=/etc/manifests
+  - INTERVAL=300
+  - ARGO_BUCKET_ACCESSKEY=access
+  - ARGO_BUCKET_SECRETKEY=secret
+
+- name: manifests
+  files:
+  - configs/argo-artifacts.yaml
+  - configs/namespace.yaml
+  - configs/envoy-filter.yaml
+  - configs/pipeline-editor.yaml
+  - configs/kfp-context.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+vars:
+- name: MANIFESTS
+  objref:
+    name: manifests
+    kind: ConfigMap
+    apiVersion: v1
+  fieldref:
+    fieldpath: metadata.name

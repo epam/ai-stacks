@@ -1,0 +1,10 @@
+/.hub/
+/.venv/
+__pycache__
+/.vscode
+/k8s/hub-config.yaml
+/k8s/hub-deployment.yaml
+/k8s/hub-rbac.yaml
+.pytest_cache
+/kustomization.yaml
+/kustomize/hub/conf/*.yaml
