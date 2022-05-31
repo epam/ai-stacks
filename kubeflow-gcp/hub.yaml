@@ -35,8 +35,6 @@ components:
     git:
       remote: https://github.com/agilestacks/google-components.git
       subDir: external-dns
-  hooks:
-  - file: .hub/get-gke-creds
 
 - name: cert-manager
   source:
@@ -219,6 +217,15 @@ components:
       subDir: seldon-core
   depends:
   - istio-ingressgateway
+- name: replikate
+  source:
+    dir: components/replikate
+    git:
+      remote: https://github.com/agilestacks/kubeflow-stacks.git
+      subDir: apps/replikate/kustomize
+  depends:
+  - minio
+  - istio-ingressgateway
 
 lifecycle:
   order:
@@ -246,3 +253,4 @@ lifecycle:
   - kubeflow-pipelines
   - kubeflow-tf-training
   - seldon-core
+  - replikate

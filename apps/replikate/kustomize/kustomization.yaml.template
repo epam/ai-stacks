@@ -6,9 +6,9 @@ commonLabels:
   app.kubernetes.io/instance: ${hub.componentName}
 
 bases:
-- ../base
+- base
 resources:
-- rbac.yaml
+- hub/rbac.yaml
 
 namespace: ${component.kubeflow.namespace}
 namePrefix: "${hub.componentName}-"
@@ -26,5 +26,5 @@ configMapGenerator:
 - name: manifests
   behavior: merge
   files:
-  - templates/argo-artifacts.yaml
-  - templates/pd-pipeline.yaml
+  - hub/templates/argo-artifacts.yaml
+  - hub/templates/pd-pipeline.yaml
