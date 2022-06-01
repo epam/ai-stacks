@@ -25,4 +25,7 @@ parameters:
   - name: secretKey
     value: ${component.minio.secretKey}
   - name: name
-    value: pipelines
+    fromEnv: ML_PIPELINES_BUCKET
+    default: mlpipelines
+    brief: |
+      Name of the bucket used across KFP, Minio and Argo
