@@ -20,10 +20,6 @@ parameters:
     value: 9000
   - name: endpoint
     value: http://minio.${component.minio.namespace}.svc.cluster.local:9000
-  - name: accessKey
-    value: ${component.minio.accessKey}
-  - name: secretKey
-    value: ${component.minio.secretKey}
   - name: name
     fromEnv: ML_PIPELINES_BUCKET
     default: mlpipelines

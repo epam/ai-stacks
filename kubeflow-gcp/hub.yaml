@@ -19,6 +19,7 @@ extensions:
     - params-kubeflow.yaml
     - params-kubeflow-pipelines.yaml
     - params-seldon-core.yaml
+    - params-replikate.yaml
   init:
     - gcp
   configure:
@@ -226,6 +227,8 @@ components:
   depends:
   - minio
   - istio-ingressgateway
+  - kubeflow-pipelines
+  - istio
 
 lifecycle:
   order:

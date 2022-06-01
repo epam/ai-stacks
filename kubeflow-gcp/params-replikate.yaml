@@ -1,9 +1,5 @@
 parameters:
+- name: component.replikate.image
+  value: gcr.io/superhub/kubeflow/replikate
 - name: component.replikate.imageTag
   value: 20220531-160519
-- name: component.bucket.accessKey
-  component: replikate
-  value: "${component.minio.accessKey}"
-- name: component.bucket.secretKey
-  component: replikate
-  value: "${component.minio.secretKey}"

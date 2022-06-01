@@ -29,7 +29,3 @@ parameters:
     value: "minio.${component.minio.namespace}.svc"
   - name: bucket.port
     value: 9000
-  - name: bucket.accessKey
-    value: "${component.minio.accessKey}"
-  - name: bucket.secretKey
-    value: "${component.minio.secretKey}"
