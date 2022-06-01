@@ -17,9 +17,9 @@ parameters:
   - name: host
     value: minio.${component.minio.namespace}.svc.cluster.local
   - name: port
-    value: "${component.minio.service.port}"
+    value: 9000
   - name: endpoint
-    value: http://${component.bucket.host}:9000
+    value: http://minio.${component.minio.namespace}.svc.cluster.local:9000
   - name: accessKey
     value: ${component.minio.accessKey}
   - name: secretKey

@@ -14,20 +14,20 @@ parameters:
   - name: namespace
     value: kubeflow-data
   - name:  volumeType
+    breif: |
+      Storage class name to be used with minio PVs
     fromEnv: KUBERNETES_STORAGE_CLASS
   - name: storageSize
     value: 20Gi
-  - name: requests.memory
-    value: 4Gi
-  - name: service.port
-    value: 9000
-
-  - name: docker
-    parameters:
-    - name: image
-      value: docker.io/minio/minio
-    - name: tag
-      value: RELEASE.2020-11-19T23-48-16Z
+  - name: mode
+    brief: |
+      Possible values: standalone or distributed
+      For distributed mode see: https://docs.minio.io/docs/distributed-minio-quickstart-guide
+    value: distributed
+  - name: replicas
+    brief: |
+      For possible number of replicas see: https://docs.min.io/docs/minio-erasure-code-quickstart-guide
+    value: 4
 
 - name: component.ingress
   parameters:
@@ -40,3 +40,9 @@ parameters:
     # empty: allow
     brief: Max filesize to upload (nginx specific)
     value: 640m
+
+- name: component.bucket.name
+  default: mlpipelines
+  fromEnv: ML_PIPELINES_BUCKET
+  brief: |
+    Name of the bucket used across KFP, Minio and Argo

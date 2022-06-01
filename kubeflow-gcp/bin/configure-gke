@@ -21,7 +21,7 @@ if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
   gcloud container clusters list --format="table(name,zone,status,createTime)"  --sort-by=~createTime --limit=12 | ident | color g
   suggest="$(gcloud container clusters list --format="value(name)" --sort-by=~createTime --limit=1)"
   ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' \
-    --suggest "$suggest" --suggest-tag "gcloud" -random -empty
+    --suggest "$suggest" --suggest-tag "latest" -random -empty
 fi
 
 cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
