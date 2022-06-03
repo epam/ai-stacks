@@ -7,7 +7,7 @@ parameters:
 
         This parameter will be used across Minio, Argo and KFP
       fromEnv: ARTIFACTS_BUCKET_ACCESS_KEY
-    - name: component.bucket.secretKey
+    - name: secretKey
       brief: |
         Secret aeccess key id for minio artifact storage
 
@@ -24,12 +24,14 @@ parameters:
   - name: accessKey
     value: ${component.bucket.accessKey}
   - name: secretKey
-    value: ${component.bucket.accessKey}
+    value: ${component.bucket.secretKey}
   - name: namespace
     value: kubeflow-data
   - name:  volumeType
     breif: |
       Storage class name to be used with minio PVs
+
+      Tip: run `kubectl get sc`
     fromEnv: KUBERNETES_STORAGE_CLASS
   - name: storageSize
     value: 20Gi
@@ -54,3 +56,8 @@ parameters:
     # empty: allow
     brief: Max filesize to upload (nginx specific)
     value: 640m
+
+outputs:
+- name: minio.url
+  brief: Minio Web Console
+  value: ${component.ingress.protocol}://minio.${dns.domain}

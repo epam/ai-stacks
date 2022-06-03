@@ -33,3 +33,7 @@ parameters:
   # default: '{none}'
   value: "${component.storage-class.name}"
 
+outputs:
+- name: kubeflow.url
+  brief: Kubeflow Central Dashboard
+  value: ${component.ingress.protocol}://kubeflow.${dns.domain}

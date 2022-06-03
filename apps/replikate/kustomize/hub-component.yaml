@@ -28,4 +28,4 @@ parameters:
 templates:
   files:
   - "*.template"
-  - "templates/*.template"
+  - "hub/templates/*.template"
