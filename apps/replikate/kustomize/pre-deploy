@@ -1,0 +1,8 @@
+#!/bin/bash
+
+KUSTOMIZE_BASE="${KUSTOMIZE_BASE:-hub}"
+BASENAME="$(basename "$0")"
+
+if test -x "$KUSTOMIZE_BASE/$BASENAME"; then
+    $KUSTOMIZE_BASE/$BASENAME
+fi

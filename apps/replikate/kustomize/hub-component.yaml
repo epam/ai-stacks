@@ -24,6 +24,9 @@ parameters:
     value: gcr.io/superhub/kubeflow/replikate
   - name: replikate.imageTag
     value: latest
+  - name: replikate.kustomize.base
+    value: hub
+    env: KUSTOMIZE_BASE
 
 templates:
   files:

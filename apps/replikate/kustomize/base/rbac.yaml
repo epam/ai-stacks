@@ -17,6 +17,7 @@ rules:
   verbs: ["create", "get", "update", "patch", "list"]
 - apiGroups: [""]
   resources:
+  - secrets
   - configmaps
   - configmaps/status
   - configmaps/logs
@@ -25,7 +26,7 @@ rules:
   - namespaces/status
   - namespaces/logs
   verbs: ["*"]
-- apiGroups: ["networking.istio.io"]
+- apiGroups: ["networking.istio.io", "rbac.istio.io"]
   resources: ["gateways", "envoyfilters", "servicerolebindings"]
   verbs: ["create", "get", "update", "patch"]
 ---

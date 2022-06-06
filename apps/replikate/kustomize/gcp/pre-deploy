@@ -1,0 +1,46 @@
+#!/bin/sh
+SA_SUFFIX=$(echo "$HUB_DOMAIN_NAME" |tr '[:upper:]' '[:lower:]'|cut -d "." -f1)
+# Service account name must be between 6 and 30 characters (inclusive), 
+# must begin with a lowercase letter, and consist of lowercase alphanumeric 
+# characters that can be separated by hyphens.
+SA_NAME="$(echo "$HUB_COMPONENT"-"$SA_SUFFIX" | cut -c1-29| tr '[:upper:]' '[:lower:]'| tr '_' '-')x"
+SA_EMAIL="$SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+
+if gcloud iam service-accounts describe "$SA_EMAIL" > /dev/null; then
+  echo "Service account: $SA_EMAIL (already exists)"
+else
+  echo "Creating service account: $SA_EMAIL"
+  gcloud iam service-accounts create "$SA_NAME" --project="$GOOGLE_PROJECT" --display-name="$SA_NAME"
+fi
+
+# SA_ROLE="roles/container.admin"
+# gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+#   --role "$SA_ROLE" \
+#   --member "serviceAccount:$GOOGLE_PROJECT.svc.id.goog[$NAMESPACE/$SA_NAME]"
+
+GEN_DIR="$(dirname "$0")/generated"
+
+mkdir -p "$GEN_DIR"
+cat << EOF > "$GEN_DIR/sa-default-editor.yaml"
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "default-editor"
+  namespace: "{{name}}"
+  annotations:
+    iam.gke.io/gcp-service-account: "$SA_EMAIL"
+  nodeSelector:
+    iam.gke.io/gke-metadata-server-enabled: "true"    
+EOF
+
+cat << EOF > "$GEN_DIR/sa-default-viewer.yaml"
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "default-editor"
+  namespace: "{{name}}"
+  annotations:
+    iam.gke.io/gcp-service-account: "$SA_EMAIL"
+  nodeSelector:
+    iam.gke.io/gke-metadata-server-enabled: "true"    
+EOF

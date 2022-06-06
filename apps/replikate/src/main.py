@@ -79,7 +79,12 @@ def reconcile(logger, name, spec, body, patch, **_):
         deep_merge(patch, diff)
       continue
 
-    kopf.adopt(data)
+    # see: https://github.com/nolar/kopf/issues/687
+    # kopf.adopt(data)
+    # for ref in data['metadata']['ownerReferences']:
+    #   if ref.get('Kind') == body['kind'] and ref.get('Name') == name:
+    #     ref['controller'] = False
+
     client = pykube.object_factory(api, data['apiVersion'], data['kind'])
     resource = client(api, data)
     if resource.exists():

@@ -27,3 +27,6 @@ configMapGenerator:
   behavior: merge
   files:
   - configs/argo-artifacts.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

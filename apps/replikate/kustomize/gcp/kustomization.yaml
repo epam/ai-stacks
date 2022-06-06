@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+- ../hub
+
+configMapGenerator:
+- name: manifests
+  behavior: merge
+  files:
+  - generated/sa-default-editor.yaml
+  - generated/sa-default-viewer.yaml
+
+patchesJson6902:
+- target:
+    group: rbac.authorization.k8s.io
+    version: v1
+    kind: ClusterRole
+    name: app
+  patch: |
+    - op: add
+      path: /rules/0
+      value:
+        apiGroups: [""]
+        resources: ["serviceaccounts"]
+        verbs: ["create", "get", "update", "patch"]

@@ -1,5 +1,8 @@
 parameters:
+- name: component.replikate.kustomize.base
+  brief: This base adds GCP service account
+  value: gcp
 - name: component.replikate.image
   value: gcr.io/superhub/kubeflow/replikate
 - name: component.replikate.imageTag
-  value: 20220531-160519
+  value: 20220606-215951
