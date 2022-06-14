@@ -1,0 +1,37 @@
+#!/bin/sh -e
+
+gcloud services enable "iam.googleapis.com" && echo "done"
+
+# See: https://www.kubeflow.org/docs/distributions/gke/authentication/
+
+SA_SUFFIX=$(echo "$HUB_DOMAIN_NAME" |tr '[:upper:]' '[:lower:]'|cut -d "." -f1)
+# Service account name must be between 6 and 30 characters (inclusive),
+# must begin with a lowercase letter, and consist of lowercase alphanumeric
+# characters that can be separated by hyphens.
+SA_NAME="$(echo "$HUB_COMPONENT"-"$SA_SUFFIX" | cut -c1-29| tr '[:upper:]' '[:lower:]'| tr '_' '-')x"
+SA_EMAIL="$SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+ROLES='roles/storage.objectAdmin'
+
+for role in $ROLES; do
+  gcloud projects remove-iam-policy-binding "$GOOGLE_PROJECT" \
+    --member="serviceAccount:$SA_EMAIL" \
+    --role="$role" \
+    || echo "(not an error)..."
+done
+
+GKE_SA="$(gcloud container clusters describe "$GOOGLE_GKE_CLUSTER" --zone "$GOOGLE_ZONE" | yq e '.nodeConfig.serviceAccount')"
+if test "$GKE_SA" = "default"; then
+  GCP_NUM="$(gcloud projects describe "$GOOGLE_PROJECT" | yq e '.projectNumber')"
+  GKE_SA="$GCP_NUM-compute@developer.gserviceaccount.com"
+fi
+gcloud iam service-accounts remove-iam-policy-binding "$SA_EMAIL" \
+  --member="$GKE_SA" \
+  --role='roles/owner' \
+  || echo "(not an error)..."
+
+if gcloud iam service-accounts describe "$SA_EMAIL" > /dev/null; then
+  gcloud iam service-accounts delete "$SA_EMAIL" --quiet --project="$GOOGLE_PROJECT" \
+  || echo "ignoring..."
+fi
+
+echo "Done!"

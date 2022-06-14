@@ -33,7 +33,7 @@ spec:
       use-pipeline: "true"
   volumeMounts:
   - name: kfp-context
-    mountPath: /home/jovyan/.config/kfp
+    mountPath: /home/jovyan/.kfp
   volumes:
   - name: kfp-context
     configMap:

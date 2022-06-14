@@ -1,46 +1,154 @@
-#!/bin/sh
+#!/bin/sh -ex
+# See: https://www.kubeflow.org/docs/distributions/gke/authentication/
+
+GEN_DIR="$(dirname "$0")/generated"
 SA_SUFFIX=$(echo "$HUB_DOMAIN_NAME" |tr '[:upper:]' '[:lower:]'|cut -d "." -f1)
-# Service account name must be between 6 and 30 characters (inclusive), 
-# must begin with a lowercase letter, and consist of lowercase alphanumeric 
+# Service account name must be between 6 and 30 characters (inclusive),
+# must begin with a lowercase letter, and consist of lowercase alphanumeric
 # characters that can be separated by hyphens.
 SA_NAME="$(echo "$HUB_COMPONENT"-"$SA_SUFFIX" | cut -c1-29| tr '[:upper:]' '[:lower:]'| tr '_' '-')x"
 SA_EMAIL="$SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+ROLES='roles/storage.objectAdmin roles/storage.admin'
+
+mkdir -p "$GEN_DIR"
 
 if gcloud iam service-accounts describe "$SA_EMAIL" > /dev/null; then
   echo "Service account: $SA_EMAIL (already exists)"
 else
   echo "Creating service account: $SA_EMAIL"
-  gcloud iam service-accounts create "$SA_NAME" --project="$GOOGLE_PROJECT" --display-name="$SA_NAME"
+  gcloud iam service-accounts create "$SA_NAME" --project="$GOOGLE_PROJECT" --display-name="kubeflow"
+  gcloud iam service-accounts keys create "$GEN_DIR/credentials.json" --iam-account="$SA_EMAIL"
 fi
+
+for role in $ROLES; do
+  gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" \
+        --member="serviceAccount:$SA_EMAIL" \
+        --role="$role" > /dev/null
+done
+
+GKE_SA="$(gcloud container clusters describe "$GOOGLE_GKE_CLUSTER" --zone "$GOOGLE_ZONE" | yq e '.nodeConfig.serviceAccount')"
+if test "$GKE_SA" = "default"; then
+  GCP_NUM="$(gcloud projects describe "$GOOGLE_PROJECT" | yq e '.projectNumber')"
+  GKE_SA="$GCP_NUM-compute@developer.gserviceaccount.com"
+fi
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+  --role 'roles/iam.workloadIdentityUser' \
+  --member "serviceAccount:$GOOGLE_PROJECT.svc.id.goog[antonskranga/default-editor]" > /dev/null
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+  --member="serviceAccount:$GKE_SA" \
+  --role='roles/owner' > /dev/null
+
 
 # SA_ROLE="roles/container.admin"
 # gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
 #   --role "$SA_ROLE" \
 #   --member "serviceAccount:$GOOGLE_PROJECT.svc.id.goog[$NAMESPACE/$SA_NAME]"
 
-GEN_DIR="$(dirname "$0")/generated"
-
-mkdir -p "$GEN_DIR"
-cat << EOF > "$GEN_DIR/sa-default-editor.yaml"
-apiVersion: v1
-kind: ServiceAccount
+cat << EOF > "$GEN_DIR/profile.yaml"
+apiVersion: kubeflow.org/v1beta1
+kind: Profile
 metadata:
-  name: "default-editor"
-  namespace: "{{name}}"
-  annotations:
-    iam.gke.io/gcp-service-account: "$SA_EMAIL"
-  nodeSelector:
-    iam.gke.io/gke-metadata-server-enabled: "true"    
+  name: "{{name}}"
+spec:
+  plugins:
+  - kind: WorkloadIdentity
+    spec:
+      gcpServiceAccount: $HUB_STACK_NAME-{{name}}@$GOOGLE_PROJECT.iam.gserviceaccount.com
 EOF
 
-cat << EOF > "$GEN_DIR/sa-default-viewer.yaml"
-apiVersion: v1
-kind: ServiceAccount
+# cat << EOF > "$GEN_DIR/gsa.yaml"
+# apiVersion: iam.cnrm.cloud.google.com/v1beta1
+# kind: IAMServiceAccount
+# metadata:
+#   name: "$HUB_STACK_NAME-{{name}}"
+# spec:
+#   displayName: kubeflow {{name}}
+# EOF
+
+# cat << EOF > "$GEN_DIR/iam-policy.yaml"
+# apiVersion: iam.cnrm.cloud.google.com/v1beta1
+# kind: IAMPolicy
+# metadata:
+#   name: "$HUB_STACK_NAME-{{name}}-profile"
+# spec:
+#   resourceRef:
+#     apiVersion: iam.cnrm.cloud.google.com/v1beta1
+#     kind: IAMServiceAccount
+#     name: "$HUB_STACK_NAME-{{name}}"
+#   bindings:
+#   - role: roles/iam.workloadIdentityUser
+#     members:
+#     - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-editor]
+#     - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-viewer]
+# EOF
+
+cat << EOF > "$GEN_DIR/pd-gcp.yaml"
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
 metadata:
-  name: "default-editor"
+  name: use-gcp
   namespace: "{{name}}"
-  annotations:
-    iam.gke.io/gcp-service-account: "$SA_EMAIL"
-  nodeSelector:
-    iam.gke.io/gke-metadata-server-enabled: "true"    
+spec:
+  desc: GCP Environment
+  env:
+  - name: GOOGLE_PROJECT
+    value: "$GOOGLE_PROJECT"
+  - name: GOOGLE_ZONE
+    value: "$GOOGLE_ZONE"
+  - name: GOOGLE_REGION
+    value: "$GOOGLE_REGION"
+  - name: CLUSTER_NAME
+    value: "$GOOGLE_GKE_CLUSTER"
+  - name: NAMESPACE
+    value: "{{name}}"
+  - name: GOOGLE_SERVICE_ACCOUNT
+    value: "$SA_EMAIL"
 EOF
+
+# cat << EOF > "$GEN_DIR/gcp-secret.yaml"
+# apiVersion: v1
+# kind: Secret
+# type: Opaque
+# metadata:
+#   name: gcp-secret
+#   namespace: {{name}}
+# data:
+#   credentials.json: $(base64 < $GEN_DIR/credentials.json)
+# EOF
+
+cat << EOF > "$GEN_DIR/pd-gcp.yaml"
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  name: gcp-sa
+  namespace: "{{name}}"
+spec:
+  desc: GCP Environment
+  selector:
+    matchLabels:
+      use-gcp: "true"
+  env:
+  - name: GOOGLE_PROJECT
+    value: "$GOOGLE_PROJECT"
+  - name: GOOGLE_ZONE
+    value: "$GOOGLE_ZONE"
+  - name: GOOGLE_REGION
+    value: "$GOOGLE_REGION"
+  - name: CLUSTER_NAME
+    value: "$GOOGLE_GKE_CLUSTER"
+  - name: NAMESPACE
+    value: "{{name}}"
+  - name: GOOGLE_SERVICE_ACCOUNT
+    value: "$HUB_STACK_NAME-{{name}}@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+  # volumeMounts:
+  # - name: secret-volume
+  #   mountPath: /secret/gcp
+  # volumes:
+  # - name: secret-volume
+  #   secret:
+  #     secretName: gcp-secret
+EOF
+
+echo "Done!"
