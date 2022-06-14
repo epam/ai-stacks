@@ -8,12 +8,14 @@ parameters:
       OpenID connect client mutual trust secret between Dex and Argo
       tip: you can use random values
     fromEnv: ARGO_OIDC_CLIENT_SECRET
-  - name: containerRuntimeExecutor
+  - name: executor
     brief: |
       At the moment k8sapi has been deprecated. It's replacement (emissary) 
       has not been tested yet 
       see more info: https://argoproj.github.io/argo-workflows/workflow-executors/
-    value: k8sapi
+    default: emissary
+    fromEnv: ARGO_EXECUTOR
+    # value: k8sapi
   - name: version
     value: v3.2.6
 

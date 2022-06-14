@@ -7,6 +7,17 @@ parameters:
     value: kubeflow
   - name: version
     value: v1.2.0
+  - name: version
+    component: kubeflow-centraldashboard
+    value: v1.5.0    
+  - name: version
+    component: kubeflow-volumes
+    value: v1.5.0  
+
+- name: component.kubebench
+  parameters:
+  - name: namespace
+    value: "${component.kubeflow.namespace}"
 
 - name: component.kubeflow.authn
   component: kubeflow-authn
@@ -24,14 +35,6 @@ parameters:
     value: 86400
   - name: volumeSize
     value: 10Gi
-
-- name: component.kubeflow.jupyter.workspaceVolume.storageClass
-  component: kubeflow-jupyter
-  brief: |
-    Configuration for storage class for the notebooks
-    see: https://github.com/kubeflow/manifests/blob/v1.1.0/jupyter/jupyter-web-app/base/configs/spawner_ui_config.yaml#L68
-  # default: '{none}'
-  value: "${component.storage-class.name}"
 
 outputs:
 - name: kubeflow.url

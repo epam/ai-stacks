@@ -17,8 +17,11 @@ extensions:
     - params-nginx.yaml
     - params-argo.yaml
     - params-kubeflow.yaml
+    - params-kubeflow-jupyter.yaml
     - params-kubeflow-pipelines.yaml
-    - params-seldon-core.yaml
+    - params-kubeflow-tensorboard.yaml
+    - params-kfserving.yaml
+    - params-seldon.yaml
     - params-replikate.yaml
   init:
     - gcp
@@ -37,279 +40,289 @@ components:
         remote: https://github.com/agilestacks/google-components.git
         subDir: external-dns
 
-  - name: cert-manager
-    source:
-      dir: components/cert-manager
-      git:
-        remote: https://github.com/agilestacks/google-components.git
-        subDir: cert-manager
+- name: cert-manager
+  source:
+    dir: components/cert-manager
+    git:
+      remote: https://github.com/agilestacks/google-components.git
+      subDir: cert-manager
+- name: nginx
+  source:
+    dir: components/nginx
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: nginx
+# - name: nginx
+#   source:
+#     dir: components/nginx-ingress
+#     git:
+#       remote: https://github.com/agilestacks/kubeflow-components.git
+#       subDir: nginx
+#       ref: v1.5.0
+  depends: [cert-manager, external-dns]
+- name: istio
+  source:
+    dir: components/istio
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: istio
+- name: istio-ingressgateway
+  source:
+    dir: components/istio-ingressgateway
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: istio-ingressgateway
+  depends: [istio]
+- name: dex
+  source:
+    dir: components/dex
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: dex
+- name: minio
+  source:
+    dir: components/minio
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: minio
+- name: mysql-argo
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-pipeline
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-katib
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-metadata
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: argo
+  source:
+    dir: components/argo
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: argo
+  depends: [mysql-argo, minio, dex]
 
-  - name: nginx
-    source:
-      dir: components/nginx
-      git:
-        remote: https://github.com/agilestacks/google-components.git
-        subDir: nginx
-    depends:
-      - cert-manager
-      - external-dns
-
-  - name: istio
-    source:
-      dir: components/istio
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: istio
-        ref: main
-
-  - name: istio-ingressgateway
-    source:
-      dir: components/istio-ingressgateway
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: istio-ingressgateway
-        ref: tags/v1.2.0
-    depends:
-      - istio
-
-  - name: dex
-    source:
-      dir: components/dex
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: dex
-        ref: tags/v1.2.0
-
-  - name: minio
-    source:
-      dir: components/minio
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: minio
-        ref: tags/v1.2.0
-
-  - name: mysql-argo
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-        ref: tags/v1.2.0
-
-  - name: mysql-pipeline
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-        ref: tags/v1.2.0
-
-  - name: mysql-katib
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-        ref: tags/v1.2.0
-
-  - name: mysql-metadata
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-        ref: tags/v1.2.0
-
-  - name: argo
-    source:
-      dir: components/argo
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: argo
-        ref: tags/v1.2.0
-    depends:
-      - mysql-argo
-      - minio
-      - dex
-
-  - name: kubeflow-common
-    source:
-      dir: components/kubeflow-common
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-common
-        ref: tags/v1.2.0
-    depends:
-      - dex
-
-  - name: kubeflow-rbac
-    source:
-      dir: components/kubeflow-rbac
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-common
-        ref: tags/v1.2.0
-    depends:
-      - dex
-      - kubeflow-common
-
-  - name: kubeflow-authn
-    source:
-      dir: components/kubeflow-authn
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-authn
-        ref: tags/v1.2.0
-    depends:
-      - dex
-      - kubeflow-common
-      - istio
-
-  - name: kubeflow-profiles
-    source:
-      dir: components/kubeflow-profiles
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-profiles
-        ref: tags/v1.2.0
-    depends:
-      - istio
-      - kubeflow-authn
-      - kubeflow-common
-
-  - name: kubeflow-centraldashboard
-    source:
-      dir: components/kubeflow-centraldashboard
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-centraldashboard
-        ref: tags/v1.2.0
-    depends:
-      - istio-ingressgateway
-      - kubeflow-common
-      - kubeflow-rbac
-      - kubeflow-profiles
-
-  - name: kubeflow-jupyter
-    source:
-      dir: components/kubeflow-jupyter
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-jupyter
-        ref: tags/v1.2.0
-    depends:
-      - istio-ingressgateway
-      - kubeflow-common
-      - kubeflow-profiles
-      - kubeflow-rbac
-      - kubeflow-webhooks
-
-  - name: kubeflow-katib
-    source:
-      dir: components/kubeflow-katib
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-katib
-        ref: tags/v1.2.0
-    depends:
-      - kubeflow-common
-      - kubeflow-rbac
-      - mysql-katib
-
-  - name: kubeflow-metadata
-    source:
-      dir: components/kubeflow-metadata
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-metadata
-        ref: tags/v1.2.0
-    depends:
-      - kubeflow-common
-      - kubeflow-rbac
-      - mysql-metadata
-
-  - name: kubeflow-pipelines
-    source:
-      dir: components/kubeflow-pipeline
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-pipeline
-        ref: tags/v1.2.0
-    depends:
-      - kubeflow-profiles
-      - kubeflow-metadata
-      - mysql-metadata
-      - minio
-
-  - name: kubeflow-webhooks
-    source:
-      dir: components/kubeflow-webhooks
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-webhooks
-        ref: tags/v1.2.0
-    depends:
-      - kubeflow-rbac
-      - kubeflow-common
-
-  - name: kubeflow-tf-training
-    source:
-      dir: components/kubeflow-tf-training
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-tf-training
-        ref: tags/v1.2.0
-    depends:
-      - kubeflow-rbac
-      - kubeflow-common
-
-  - name: seldon-core
-    source:
-      dir: components/seldon-core
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: seldon-core
-        ref: tags/v1.2.0
-    depends:
-      - istio-ingressgateway
-
-  - name: replikate
-    source:
-      dir: components/replikate
-      git:
-        remote: https://github.com/agilestacks/kubeflow-stacks.git
-        subDir: apps/replikate/kustomize
-        ref: tags/v1.2.0
-    depends:
-      - minio
-      - istio-ingressgateway
-      - kubeflow-pipelines
-      - istio
+- name: kubeflow-common
+  source:
+    dir: components/kubeflow-common
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-common
+  depends: [dex]
+- name: kubeflow-rbac
+  source:
+    dir: components/kubeflow-rbac
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-common
+  depends: [dex, kubeflow-common]
+- name: kubeflow-authn
+  source:
+    dir: components/kubeflow-authn
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-authn
+  depends: [dex, kubeflow-common, istio]
+- name: kubeflow-profiles
+  source:
+    dir: components/kubeflow-profiles
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-profiles
+  depends:
+  - istio
+  - kubeflow-authn
+  - kubeflow-common
+- name: kubeflow-centraldashboard
+  source:
+    dir: components/kubeflow-centraldashboard-v1.5.0
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-centraldashboard
+      ref: v1.5.0
+  depends:
+  - istio-ingressgateway
+  - kubeflow-common
+  - kubeflow-rbac
+  - kubeflow-profiles
+- name: kubeflow-jupyter
+  source:
+    dir: components/kubeflow-jupyter-v1.5.0
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-jupyter
+      ref: v1.5.0
+  depends:
+  - istio-ingressgateway
+  - kubeflow-common
+  - kubeflow-profiles
+  - kubeflow-rbac
+  - kubeflow-webhooks
+- name: kubeflow-tensorboard
+  source:
+    dir: components/kubeflow-tensorboard
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-tensorboard
+      ref: v1.5.0
+  depends:
+  - kubeflow-common
+  - kubeflow-profiles
+  - kubeflow-rbac
+  - istio-ingressgateway
+- name: kubeflow-volumes
+  source:
+    dir: components/kubeflow-volumes
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-volumes
+      ref: v1.5.0
+  depends:
+  - kubeflow-common
+  - kubeflow-profiles
+  - kubeflow-rbac
+  - istio-ingressgateway
+- name: kubeflow-katib
+  source:
+    dir: components/kubeflow-katib
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-katib
+  depends:
+  - kubeflow-common
+  - kubeflow-rbac
+  - mysql-katib
+- name: kubeflow-metadata
+  source:
+    dir: components/kubeflow-metadata
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-metadata
+  depends:
+  - kubeflow-common
+  - kubeflow-rbac
+  - mysql-metadata
+- name: kubeflow-pipelines
+  source:
+    dir: components/kubeflow-pipeline
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-pipeline
+  depends:
+  - kubeflow-profiles
+  - kubeflow-metadata
+  - mysql-metadata
+  - minio
+- name: knative
+  source:
+    dir: components/knative
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: knative
+      ref: v1.5.0
+- name: kfserving
+  source:
+    dir: components/kfserving
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kfserving
+      ref: v1.5.0
+  depends:
+  - istio-ingressgateway
+  - kubeflow-common
+  - knative
+# - name: kubebench
+#   source:
+#     dir: components/kubebench
+#     git:
+#       remote: https://github.com/agilestacks/kubeflow-components.git
+#       subDir: kubebench
+#       ref: v1.5.0
+#   depends:
+#   - istio-ingressgateway
+- name: kubeflow-webhooks
+  source:
+    dir: components/kubeflow-webhooks
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-webhooks
+  depends:
+  - kubeflow-rbac
+  - kubeflow-common
+- name: kubeflow-tf-training
+  source:
+    dir: components/kubeflow-tf-training
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-tf-training
+  depends:
+  - kubeflow-rbac
+  - kubeflow-common
+- name: seldon-core
+  source:
+    dir: components/seldon-core-operator
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: seldon-core
+      ref: v1.5.0
+  depends:
+  - istio-ingressgateway
+- name: replikate
+  source:
+    dir: components/replikate
+    git:
+      remote: https://github.com/agilestacks/kubeflow-stacks.git
+      subDir: apps/replikate/kustomize
+  depends:
+  - minio
+  - istio-ingressgateway
+  - kubeflow-pipelines
+  - istio
 
 lifecycle:
   order:
-    - external-dns
-    - cert-manager
-    - nginx
-    - dex
-    - istio
-    - istio-ingressgateway
-    - minio
-    - mysql-argo
-    - mysql-pipeline
-    - mysql-katib
-    - mysql-metadata
-    - argo
-    - kubeflow-common
-    - kubeflow-rbac
-    - kubeflow-authn
-    - kubeflow-profiles
-    - kubeflow-webhooks
-    - kubeflow-centraldashboard
-    - kubeflow-jupyter
-    - kubeflow-katib
-    - kubeflow-metadata
-    - kubeflow-pipelines
-    - kubeflow-tf-training
-    - seldon-core
-    - replikate
+  - external-dns
+  - cert-manager
+  - nginx
+  - dex
+  - istio
+  - istio-ingressgateway
+  - minio
+  - mysql-argo
+  - mysql-pipeline
+  - mysql-katib
+  - mysql-metadata
+  - argo
+  - kubeflow-common
+  - kubeflow-rbac
+  - kubeflow-authn
+  - kubeflow-profiles
+  - kubeflow-webhooks
+  - kubeflow-centraldashboard
+  - kubeflow-jupyter
+  - kubeflow-katib
+  - kubeflow-metadata
+  - kubeflow-pipelines
+  - kubeflow-tensorboard
+  - kubeflow-volumes
+  - kubeflow-tf-training
+  # - kubebench
+  - knative
+  - kfserving
+  - seldon-core
+  - replikate
