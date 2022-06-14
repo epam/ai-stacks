@@ -26,16 +26,22 @@ parameters:
       default: 1.21
       brief: Version of Kubernetes API
       fromEnv: GKE_KUBERNETES_VERSION
+    - name: imageType
+      default: ubuntu
+      brief: | 
+        Select GKE image type
+        See more: https://cloud.google.com/kubernetes-engine/docs/concepts/node-images#available_node_images
+      fromEnv: GKE_IMAGE_TYPE
     - name: addons
       value: |
         NetworkPolicy
         NodeLocalDNS
-        HttpLoadBalancing
+        ConfigConnector
 
   - name: component.gkeNodePool
     parameters:
     - name: name
-      value: ${hubStackName}-default
+      value: cpu-nodes
     - name: clusterName
       value: ${component.gke.name}
     - name: zone
@@ -48,3 +54,9 @@ parameters:
       value: n1-standard-2
       fromEnv: GKE_NODE_POOL_MACHINE_TYPE
       brief: GKE worker node machine size
+    - name: imageType
+      default: ubuntu
+      brief: | 
+        Select GKE image type
+        See more: https://cloud.google.com/kubernetes-engine/docs/concepts/node-images#available_node_images
+      fromEnv: GKE_IMAGE_TYPE
