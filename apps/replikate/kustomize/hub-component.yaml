@@ -31,4 +31,4 @@ parameters:
 templates:
   files:
   - "*.template"
-  - "hub/templates/*.template"
+  - "hub/configs/*.template"

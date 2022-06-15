@@ -4,6 +4,6 @@ type: Opaque
 metadata:
   name: "argo-artifacts"
   namespace: "{{name}}"
-stringData:
-  accesskey: "${component.bucket.accessKey}"
-  secretkey: "${component.bucket.secretKey}"
+data:
+  accesskey: "${component.bucket.accessKey/base64}"
+  secretkey: "${component.bucket.secretKey/base64}"

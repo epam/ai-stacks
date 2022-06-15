@@ -1,0 +1,27 @@
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  name: use-minio
+  namespace: "{{name}}"
+  labels:
+    app.kubernetes.io/managed-by: "${hub.componentName}"
+spec:
+  desc: Allow minio access
+  env:
+  - name: AWS_S3_ENDPOINT
+    value: "${component.bucket.endpoint}"
+  - name: AWS_REGION
+    value: "${component.bucket.region}"
+  - name: AWS_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: argo-artifacts
+        key: accesskey
+  - name: AWS_SECRET_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: argo-artifacts
+        key: secretkey
+  selector:
+    matchLabels:
+      use-minio: "true"

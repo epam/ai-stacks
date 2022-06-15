@@ -10,7 +10,9 @@ configMapGenerator:
   files:
   - generated/profile.yaml
   - generated/pd-gcp.yaml
-  - generated/gcp-secret.yaml
+  - generated/gsa.yaml
+  - generated/iam-policy.yaml
+  # - generated/gcp-secret.yaml
   # - generated/sa-default-editor.yaml
   # - generated/sa-default-viewer.yaml
 
@@ -27,3 +29,10 @@ patchesJson6902:
         apiGroups: [""]
         resources: ["serviceaccounts"]
         verbs: ["create", "get", "update", "patch"]
+    - op: add
+      path: /rules/0
+      value:
+        apiGroups: ["iam.cnrm.cloud.google.com"]
+        resources: ["iamserviceaccounts", "iampolicies"]
+        verbs: ["create", "get", "update", "patch"]
+

@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 # See: https://www.kubeflow.org/docs/distributions/gke/authentication/
 
 GEN_DIR="$(dirname "$0")/generated"
@@ -17,7 +17,7 @@ if gcloud iam service-accounts describe "$SA_EMAIL" > /dev/null; then
 else
   echo "Creating service account: $SA_EMAIL"
   gcloud iam service-accounts create "$SA_NAME" --project="$GOOGLE_PROJECT" --display-name="kubeflow"
-  gcloud iam service-accounts keys create "$GEN_DIR/credentials.json" --iam-account="$SA_EMAIL"
+  # gcloud iam service-accounts keys create "$GEN_DIR/credentials.json" --iam-account="$SA_EMAIL"
 fi
 
 for role in $ROLES; do
@@ -55,34 +55,39 @@ spec:
   plugins:
   - kind: WorkloadIdentity
     spec:
-      gcpServiceAccount: $HUB_STACK_NAME-{{name}}@$GOOGLE_PROJECT.iam.gserviceaccount.com
+      gcpServiceAccount: $SA_EMAIL
+EOF
+      # gcpServiceAccount: $HUB_STACK_NAME-{{name}}@$GOOGLE_PROJECT.iam.gserviceaccount.com
+
+cat << EOF > "$GEN_DIR/gsa.yaml"
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMServiceAccount
+metadata:
+  name: "$HUB_STACK_NAME-{{name}}"
+  namespace: "{{name}}"
+  annotations:
+    cnrm.cloud.google.com/project-id: "$GOOGLE_PROJECT"
+spec:
+  displayName: kubeflow {{name}}
 EOF
 
-# cat << EOF > "$GEN_DIR/gsa.yaml"
-# apiVersion: iam.cnrm.cloud.google.com/v1beta1
-# kind: IAMServiceAccount
-# metadata:
-#   name: "$HUB_STACK_NAME-{{name}}"
-# spec:
-#   displayName: kubeflow {{name}}
-# EOF
-
-# cat << EOF > "$GEN_DIR/iam-policy.yaml"
-# apiVersion: iam.cnrm.cloud.google.com/v1beta1
-# kind: IAMPolicy
-# metadata:
-#   name: "$HUB_STACK_NAME-{{name}}-profile"
-# spec:
-#   resourceRef:
-#     apiVersion: iam.cnrm.cloud.google.com/v1beta1
-#     kind: IAMServiceAccount
-#     name: "$HUB_STACK_NAME-{{name}}"
-#   bindings:
-#   - role: roles/iam.workloadIdentityUser
-#     members:
-#     - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-editor]
-#     - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-viewer]
-# EOF
+cat << EOF > "$GEN_DIR/iam-policy.yaml"
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: "$HUB_STACK_NAME-{{name}}-profile"
+  namespace: "{{name}}"
+spec:
+  resourceRef:
+    apiVersion: iam.cnrm.cloud.google.com/v1beta1
+    kind: IAMServiceAccount
+    name: "$HUB_STACK_NAME-{{name}}"
+  bindings:
+  - role: roles/iam.workloadIdentityUser
+    members:
+    - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-editor]
+    - serviceAccount:$GOOGLE_PROJECT.svc.id.goog[{{name}}/default-viewer]
+EOF
 
 cat << EOF > "$GEN_DIR/pd-gcp.yaml"
 apiVersion: kubeflow.org/v1alpha1
@@ -142,13 +147,6 @@ spec:
     value: "{{name}}"
   - name: GOOGLE_SERVICE_ACCOUNT
     value: "$HUB_STACK_NAME-{{name}}@$GOOGLE_PROJECT.iam.gserviceaccount.com"
-  # volumeMounts:
-  # - name: secret-volume
-  #   mountPath: /secret/gcp
-  # volumes:
-  # - name: secret-volume
-  #   secret:
-  #     secretName: gcp-secret
 EOF
 
 echo "Done!"

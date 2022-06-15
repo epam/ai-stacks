@@ -6,32 +6,23 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: "${hub.componentName}"
 spec:
-  desc: Pipeline Support
+  desc: Allow KF Pipelines
   env:
-  - name: KF_PIPELINES_ENDPOINT_ENV
+  - name: KF_PIPELINES_ENDPOINT
     value: "http://ml-pipeline.${component.kubeflow.namespace}.svc.cluster.local:8888"
   - name: KF_PIPELINES_UI_ENDPOINT
     value: "${component.ingress.protocol}://${component.ingress.host}/_/pipeline"
   - name: KF_PIPELINES_DEFAULT_EXPERIMENT_NAME
     value: "{{name}}"
-  - name: AWS_S3_ENDPOINT
-    value: "${component.bucket.endpoint}"
-  - name: AWS_REGION
-    value: "${component.bucket.region}"
-  - name: AWS_ACCESS_KEY_ID
-    valueFrom:
-      secretKeyRef:
-        name: argo-artifacts
-        key: accesskey
-  - name: AWS_SECRET_ACCESS_KEY
-    valueFrom:
-      secretKeyRef:
-        name: argo-artifacts
-        key: secretkey
+  - name: KF_PIPELINES_SA_TOKEN_PATH
+    value: /var/run/secrets/kubeflow/pipelines/token
   selector:
     matchLabels:
-      use-pipeline: "true"
+      use-kfp: "true"
   volumeMounts:
+  - mountPath: /var/run/secrets/kubeflow/pipelines
+    name: volume-kf-pipeline-token
+    readOnly: true
   - name: kfp-context
     mountPath: /home/jovyan/.kfp
   volumes:
@@ -42,3 +33,10 @@ spec:
       - key: context.json
         path: context.json
         mode: 0666
+  - name: volume-kf-pipeline-token
+    projected:
+      sources:
+        - serviceAccountToken:
+            path: token
+            expirationSeconds: 7200
+            audience: pipelines.kubeflow.org
