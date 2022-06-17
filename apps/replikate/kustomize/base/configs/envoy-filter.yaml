@@ -25,5 +25,5 @@ spec:
        config:
          inlineCode: |
            function envoy_on_request(request_handle)
-             request_handle:headers():add("kubeflow-userid", "{profile_owner}")
+             request_handle:headers():add("kubeflow-userid", "{{this.metadata.annotations.owner}}")
            end

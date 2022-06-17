@@ -4,3 +4,4 @@ metadata:
   name: "{{name}}"
   labels:
     istio-injection: enabled
+    modelmesh-enabled: "true"

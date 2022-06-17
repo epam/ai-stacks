@@ -16,7 +16,7 @@ environ.setdefault("REMOTE_DEBUG", "disabled")
 CONFIGMAP     = environ["MANIFESTS_SOURCE"]
 CONFIG_DIR    = environ["CONFIG_DIR"]
 INSTANCE_ID   = environ["INSTANCE_ID"]
-INTERVAL      = float(environ["INTERVAL"])
+INTERVAL      = float(environ.get("INTERVAL", "30"))
 
 FILTER_LABEL={"app.kubernetes.io/part-of": "kubeflow-profile"}
 
@@ -61,8 +61,9 @@ def reconcile(logger, name, spec, body, patch, **_):
   Syncronies the resourcess describes as templates and propagate it to the profile
   """
   logger.info(f"Reconciling {name}")
-  owner  = spec.get("owner", {}).get("name")
-  params = {"name": name, "owner": owner}
+  self_obj = deep_merge({}, body)
+  # logger.info(f" >> {type(self_obj)}")
+  params = {"name": name, "this": self_obj}
   self_hash = k8s_hash(body)
 
   for tpl in TEMPLATES:
