@@ -23,6 +23,9 @@ configMapGenerator:
   - configs/kfp-context.yaml
   - configs/rb-kserve-editor.yaml
   - configs/rb-kserve-viewer.yaml
+  - configs/rb-kubeflow-serving-editor.yaml
+  - configs/role-kserve.yaml
+  - configs/rb-kserve.yaml
 
 vars:
 - name: MANIFESTS

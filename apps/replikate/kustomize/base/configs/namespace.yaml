@@ -5,3 +5,5 @@ metadata:
   labels:
     istio-injection: enabled
     modelmesh-enabled: "true"
+    katib.kubeflow.org/metrics-collector-injection: enabled
+    serving.kubeflow.org/inferenceservice: enabled

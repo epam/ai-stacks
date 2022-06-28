@@ -9,6 +9,7 @@ requires:
   - kubernetes
 
 parameters:
+- name: dns.domain
 - name: component
   parameters:
   - name: ingress.protocol

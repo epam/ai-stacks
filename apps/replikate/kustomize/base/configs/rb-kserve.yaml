@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kserve-manager
+  namespace: "{{name}}"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kserve-manager
+  namespace: "{{name}}"
+subjects:
+- kind: ServiceAccount
+  name: default-viewer
+  namespace: "{{name}}"
+- kind: User
+  name: "{{this.metadata.annotations.owner}}"
+  apiGroup: rbac.authorization.k8s.io
+- kind: User
+  name: "{{name}}"
+  apiGroup: rbac.authorization.k8s.io

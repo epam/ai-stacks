@@ -16,3 +16,4 @@ configMapGenerator:
   - configs/argo-artifacts.yaml
   - configs/pd-pipeline.yaml
   - configs/pd-minio.yaml
+  - configs/pd-ingress.yaml

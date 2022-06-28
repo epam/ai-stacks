@@ -1,0 +1,49 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "kserve-manager"
+  namespace: "{{name}}"
+rules:
+- apiGroups:
+  - serving.kubeflow.org
+  - serving.kserve.io
+  resources:
+  - inferenceservices
+  - inferenceservices/status
+  - inferenceservices/finalizers
+  - trainedmodels
+  - trainedmodels/status
+  - servingruntimes
+  - servingruntimes/status
+  - servingruntimes/finalizers
+  - clusterservingruntimes
+  - clusterservingruntimes/finalizers
+  - clusterservingruntimes/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
+- apiGroups: [serving.knative.dev]
+  resources:
+  - services
+  - services/status
+  - routes
+  - routes/status
+  - configurations
+  - configurations/status
+  - revisions
+  - revisions/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
