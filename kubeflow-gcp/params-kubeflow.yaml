@@ -13,6 +13,9 @@ parameters:
   - name: version
     component: kubeflow-volumes
     value: v1.5.0  
+  - name: version
+    component: kubeflow-training-operator
+    value: v1.5.1  
 
 - name: component.kubebench
   parameters:

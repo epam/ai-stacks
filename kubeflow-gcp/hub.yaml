@@ -20,7 +20,8 @@ extensions:
     - params-kubeflow-jupyter.yaml
     - params-kubeflow-pipelines.yaml
     - params-kubeflow-tensorboard.yaml
-    - params-kfserving.yaml
+    - params-kubeflow-katib.yaml
+    - params-kserve.yaml
     - params-seldon.yaml
     - params-replikate.yaml
   init:
@@ -31,6 +32,9 @@ extensions:
     - bin/gen-oidc-secrets
     - kubernetes
     - env
+  deploy:
+    before:
+    - bin/check-gke-running
 
 components:
   - name: external-dns
@@ -85,6 +89,13 @@ components:
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
       subDir: minio
+- name: kserve-etcd
+  source:
+    dir: components/etcd
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: etcd
+      ref: 1.5.0
 - name: mysql-argo
   source:
     dir: components/mysql
@@ -197,16 +208,29 @@ components:
   - kubeflow-profiles
   - kubeflow-rbac
   - istio-ingressgateway
-- name: kubeflow-katib
+# - name: kubeflow-katib
+#   source:
+#     dir: components/kubeflow-katib
+#     git:
+#       remote: https://github.com/agilestacks/kubeflow-components.git
+#       subDir: kubeflow-katib
+#   depends:
+#   - kubeflow-common
+#   - kubeflow-rbac
+#   - mysql-katib
+
+- name: katib
   source:
-    dir: components/kubeflow-katib
+    dir: components/kubeflow-katib-v1.5.0
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
       subDir: kubeflow-katib
+      ref: v1.5.0
   depends:
   - kubeflow-common
   - kubeflow-rbac
   - mysql-katib
+
 - name: kubeflow-metadata
   source:
     dir: components/kubeflow-metadata
@@ -235,17 +259,18 @@ components:
       remote: https://github.com/agilestacks/kubeflow-components.git
       subDir: knative
       ref: v1.5.0
-- name: kfserving
+- name: kserve
   source:
-    dir: components/kfserving
+    dir: components/kserve
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
-      subDir: kfserving
+      subDir: kserve
       ref: v1.5.0
   depends:
   - istio-ingressgateway
   - kubeflow-common
   - knative
+  - kserve-etcd
 # - name: kubebench
 #   source:
 #     dir: components/kubebench
@@ -264,12 +289,22 @@ components:
   depends:
   - kubeflow-rbac
   - kubeflow-common
-- name: kubeflow-tf-training
+# - name: kubeflow-tf-training
+#   source:
+#     dir: components/kubeflow-tf-training
+#     git:
+#       remote: https://github.com/agilestacks/kubeflow-components.git
+#       subDir: kubeflow-tf-training
+#   depends:
+#   - kubeflow-rbac
+#   - kubeflow-common
+- name: kubeflow-training-operator
   source:
-    dir: components/kubeflow-tf-training
+    dir: components/kubeflow-training-operator
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
-      subDir: kubeflow-tf-training
+      subDir: kubeflow-training-operator
+      ref: v1.5.0
   depends:
   - kubeflow-rbac
   - kubeflow-common
@@ -315,14 +350,17 @@ lifecycle:
   - kubeflow-webhooks
   - kubeflow-centraldashboard
   - kubeflow-jupyter
-  - kubeflow-katib
+  # - kubeflow-katib
+  - katib
   - kubeflow-metadata
   - kubeflow-pipelines
   - kubeflow-tensorboard
   - kubeflow-volumes
-  - kubeflow-tf-training
+  # - kubeflow-tf-training
+  - kubeflow-training-operator
   # - kubebench
+  - kserve-etcd
   - knative
-  - kfserving
+  - kserve
   - seldon-core
   - replikate

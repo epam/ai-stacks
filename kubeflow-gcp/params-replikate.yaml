@@ -5,4 +5,4 @@ parameters:
 - name: component.replikate.image
   value: gcr.io/superhub/kubeflow/replikate
 - name: component.replikate.imageTag
-  value: 20220606-215951
+  value: 20220617-151949
