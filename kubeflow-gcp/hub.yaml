@@ -37,12 +37,19 @@ extensions:
     - bin/check-gke-running
 
 components:
-  - name: external-dns
-    source:
-      dir: components/external-dns
-      git:
-        remote: https://github.com/agilestacks/google-components.git
-        subDir: external-dns
+- name: external-dns
+  source:
+    dir: components/external-dns
+    git:
+      remote: https://github.com/agilestacks/google-components.git
+      subDir: external-dns
+  hooks:
+  - file: bin/create-dns-admin-sa
+    triggers: [pre-deploy]
+  - file: bin/delete-dns-admin-sa
+    triggers: [post-undeploy]
+  - file: bin/patch-kube-sa
+    triggers: [post-deploy]
 
 - name: cert-manager
   source:

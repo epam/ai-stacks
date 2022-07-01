@@ -1,0 +1,12 @@
+#!/bin/sh -e
+
+SA_SUFFIX=$(echo "$HUB_DOMAIN_NAME" |tr '[:upper:]' '[:lower:]'|cut -d "." -f1)
+# Service account name must be between 6 and 30 characters (inclusive),
+# must begin with a lowercase letter, and consist of lowercase alphanumeric
+# characters that can be separated by hyphens.
+SA_NAME="$(echo "$HUB_COMPONENT"-"$SA_SUFFIX" | cut -c1-29| tr '[:upper:]' '[:lower:]'| tr '_' '-')x"
+SA_EMAIL="$SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+
+kubectl="kubectl --context=$HUB_DOMAIN_NAME -n $NAMESPACE"
+$kubectl --overwrite=true annotate sa "$HUB_COMPONENT" iam.gke.io/gcp-service-account="$SA_EMAIL"
+$kubectl --context="$HUB_DOMAIN_NAME" -n "$NAMESPACE" rollout restart deployment "$HUB_COMPONENT"
