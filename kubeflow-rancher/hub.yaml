@@ -1,0 +1,41 @@
+version: 1
+kind: stack
+
+requires:
+- kubernetes
+
+components:
+- name: istio
+  source:
+    dir: components/istio
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: istio
+- name: istio-ingressgateway
+  source:
+    dir: components/istio-ingressgateway
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: istio-ingressgateway
+  depends: [istio]
+- name: dex
+  source:
+    dir: components/dex
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: dex
+- name: minio
+  source:
+    dir: components/minio
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: minio
+
+extensions:
+  include:
+  - params.yaml
+  - params-minio.yaml
+  - params-istio.yaml
+  configure:
+    - kubernetes
+    - env

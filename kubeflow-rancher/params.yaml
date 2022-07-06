@@ -1,0 +1,12 @@
+parameters:
+- name: dns.domain
+  value: localhost
+- name: component.storage-class.name
+  value: local-path
+- name: component.ingress
+  parameters:
+  - name: protocol
+    value: http
+  - name: host
+    value: minio.localhost
+    componetn: minio
