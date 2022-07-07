@@ -1,0 +1,25 @@
+parameters:
+- name: component.dex
+  parameters: 
+  - name: namespace
+    value: kube-ingress
+  - name: authproxy.cookieExpire
+    value: "'24h0m0s'"  
+  - name: passwordDb.email
+    brief: Kubeflow admin user name
+    fromEnv: USER
+    default: admin@kubeflow.local
+  - name: passwordDb.password
+    brief: Kubeflow admin user password
+    fromEnv: DEX_PASSWORD
+  # - name: ldap
+  #   empty: allow
+  #   parameters:
+  #   - name: host
+  #   - name: dn
+  #   - name: password
+  #   - name: search.dn
+  #   - name: search.usernameAttr
+  #   - name: search.filter
+  #   - name: search.idAttr
+  #   - name: groupSearch.dn

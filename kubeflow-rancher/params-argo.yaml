@@ -1,0 +1,33 @@
+parameters:
+- name: component.argo
+  parameters:
+  - name: namespace
+    value: kubeflow-data
+  - name: oidc.clientSecret
+    brief: | 
+      OpenID connect client mutual trust secret between Dex and Argo
+      tip: you can use random values
+    fromEnv: ARGO_OIDC_CLIENT_SECRET
+  - name: executor
+    brief: |
+      At the moment k8sapi has been deprecated. It's replacement (emissary) 
+      has not been tested yet 
+      see more info: https://argoproj.github.io/argo-workflows/workflow-executors/
+    default: emissary
+    fromEnv: ARGO_EXECUTOR
+    # value: k8sapi
+  - name: version
+    value: v3.2.6
+
+- name: component
+  component: argo
+  parameters: 
+  - name: ingress.host
+    value: "argo.${dns.domain}"
+  # TODO: we may replace in the future hard dependency on minio 
+  # in favour of cloud native solutions (or minio to proxy to cloud native)
+  # see: https://argoproj.github.io/argo-workflows/configure-artifact-repository/#configuring-your-artifact-repository
+  - name: bucket.host
+    value: "minio.${component.minio.namespace}.svc"
+  - name: bucket.port
+    value: 9000

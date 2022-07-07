@@ -1,0 +1,31 @@
+#!/bin/bash -e
+
+KUBECONFIG="$(dotenv get HUB_KUBECONFIG --default "$KUBECONFIG")"
+export KUBECONFIG
+
+echo -n "* Checking Kubernetes server API version: "
+api_version="$(kubectl version -o json | jq -r '.serverVersion | .major+"."+.minor')"
+
+contains() {
+  local a
+  a="$1"
+  shift 
+  case $* in 
+  *$a*) true;; 
+  *) false;; 
+  esac
+}
+
+if contains "$api_version" 1.19 1.20 1.21; then
+    color green "$api_version (OK)"
+else
+    color error "$api_version (unsupported)"
+    cat << EOF | color warn
+
+Warning: we have not yet tested this verison of Kubernets
+See more about prerequisites here: [TODO: link to the doc]
+
+Verified versions: 1.19 1.20 1.21
+
+EOF
+fi

@@ -1,0 +1,39 @@
+parameters:
+- name: component.kubeflow
+  parameters:
+  - name: name
+    value: kubeflow
+  - name: namespace
+    value: kubeflow
+  - name: version
+    value: v1.5.1
+  - name: version
+    component: kubeflow-common
+    value: v1.2.0
+  - name: version
+    component: kubeflow-rbac
+    value: v1.2.0
+  - name: version
+    component: kubeflow-authn
+    value: v1.2.0
+  - name: version
+    component: kubeflow-profiles
+    value: v1.2.0
+  - name: authn.oidcProvider
+    value: http://auth.${dns.domain}
+  - name: authn.oidcRedirectURI
+    value: http://${component.kubeflow.name}.${dns.domain}/login/oidc
+  - name: authn.oidcSecret
+    brief: | 
+      OpenID connect client mutual trust secret between Dex and Argo
+      tip: you can use random values
+    fromEnv: KUBEFLOW_OIDC_CLIENT_SECRET
+  - name: authn.sessionMaxAge
+    value: 86400
+  - name: authn.volumeSize
+    value: 1Gi
+
+outputs:
+- name: kubeflow.url
+  brief: Kubeflow Central Dashboard
+  value: http://kubeflow.${dns.domain}

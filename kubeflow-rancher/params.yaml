@@ -1,4 +1,7 @@
 parameters:
+- name: kubernetes.context
+  env: HUB_KUBECONTEXT
+  default: rancher-desktop
 - name: dns.domain
   value: localhost
 - name: component.storage-class.name

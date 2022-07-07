@@ -17,10 +17,3 @@ parameters:
   - name: ingressGateway.replicas
     component: istio-ingressgateway
     value: 1
-  # nginx specific settings
-  - name: maxUploadSize
-    value: "1024m"
-  - name: uploadTimeout
-    value: "1800"
-  - name: readTimeout
-    value: "1800"

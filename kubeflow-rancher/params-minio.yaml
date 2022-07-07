@@ -34,7 +34,7 @@ parameters:
       Tip: run `kubectl get sc`
     fromEnv: KUBERNETES_STORAGE_CLASS
   - name: storageSize
-    value: 20Gi
+    value: 2Gi
   - name: mode
     brief: |
       Possible values: standalone or distributed
@@ -45,17 +45,9 @@ parameters:
       For possible number of replicas see: https://docs.min.io/docs/minio-erasure-code-quickstart-guide
     value: 1
 
-- name: component.ingress
-  parameters:
-  - name: protocol
-    value: https
-  - name: host
-    component: minio
-    value: minio.${dns.domain}
-  - name: fileSize
-    # empty: allow
-    brief: Max filesize to upload (nginx specific)
-    value: 640m
+- name: component.ingress.host
+  component: minio
+  value: minio.${dns.domain}
 
 outputs:
 - name: minio.url

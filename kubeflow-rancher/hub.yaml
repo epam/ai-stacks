@@ -30,12 +30,89 @@ components:
     git:
       remote: https://github.com/agilestacks/kubeflow-components.git
       subDir: minio
+- name: mysql-argo
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-pipeline
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-katib
+  source:
+    dir: components/mysql
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: mysql-metadata
+  source:
+    dir: components/mysql     
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: mysql
+- name: argo
+  source:
+    dir: components/argo
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: argo
+  depends: [mysql-argo, minio, dex]      
+- name: kubeflow-common
+  source:
+    dir: components/kubeflow-common
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-common
+  depends: [dex]
+- name: kubeflow-rbac
+  source:
+    dir: components/kubeflow-rbac
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-common
+  depends: [dex, kubeflow-common]  
+- name: kubeflow-authn
+  source:
+    dir: components/kubeflow-authn
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-authn
+  depends: [dex, kubeflow-common, istio]  
+- name: kubeflow-profiles
+  source:
+    dir: components/kubeflow-profiles
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-profiles
+  depends: [istio, kubeflow-authn, kubeflow-common]
+- name: kubeflow-centraldashboard
+  source:
+    dir: components/kubeflow-centraldashboard-v1.5.0
+    git:
+      remote: https://github.com/agilestacks/kubeflow-components.git
+      subDir: kubeflow-centraldashboard
+      ref: v1.5.0
+  depends: [istio-ingressgateway, kubeflow-profiles, kubeflow-common]
 
 extensions:
   include:
   - params.yaml
   - params-minio.yaml
   - params-istio.yaml
+  - params-dex.yaml
+  - params-argo.yaml
+  - params-mysql.yaml
+  - params-kubeflow.yaml
   configure:
+    - bin/rancher-kubeconfig
+    - bin/gen-oidc-secrets
     - kubernetes
     - env
+  deploy:
+    before:
+    - kubernetes
+    - ./bin/check-cluster
