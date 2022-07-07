@@ -13,6 +13,8 @@ parameters:
   fromEnv: GOOGLE_GKE_CLUSTER
 - name: component.gke.zone
   fromEnv: GOOGLE_ZONE
+- name: component.gke.serviceAccount
+  fromEnv: GOOGLE_GKE_CLUSTER_SA
 - name: component.storage-class.name
   brief: |
     Name of the existing Kubenretes storage class.

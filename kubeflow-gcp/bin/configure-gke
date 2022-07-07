@@ -9,27 +9,30 @@ if ! dotenv contains "HUB_KUBECONFIG"; then
   dotenv set "HUB_KUBECONFIG" "$(files abspath ".hub/env/$domain.kubeconfig")"
 fi
 
+echo "Configuring GKE cluster"
 # shellcheck disable=SC2155
 export KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
+cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
+if test "$(gcloud container clusters list --filter="name:$cluster_name" --format='value(status)')" = "RUNNING"; then
+  echo "Using GKE cluster: $cluster_name"
+else
+  cluster_name=""
+fi
 
-if ! dotenv contains "GOOGLE_GKE_CLUSTER"; then
-  echo "Configuring GKE cluster name"
-  echo "* Using GCP zone: $zone"
-  zone="$(dotenv get GOOGLE_ZONE)"
-
+if test -z "$cluster_name"; then
   echo "* List of GKE clusters"
   gcloud container clusters list --format="table(name,zone,status,createTime)"  --sort-by=~createTime --limit=12 | ident | color g
   suggest="$(gcloud container clusters list --format="value(name)" --sort-by=~createTime --limit=1)"
   ask env "GOOGLE_GKE_CLUSTER" --message 'gke cluster name (for possible values see above)' \
     --suggest "$suggest" --suggest-tag "latest" -random -empty
+  cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
 fi
 
-cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
 echo "* Fetching cluster $cluster_name kubeconfig"
 GOOGLE_ZONE="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
 if test -n "$GOOGLE_ZONE"; then
   gcloud container clusters get-credentials "$cluster_name" --zone "$GOOGLE_ZONE" | ident || true
-  echo "Taking region and zone from cluster: $zone"
+  echo "* Using region and zone from cluster: $cluster_name"
   GOOGLE_REGION="$(echo "$GOOGLE_ZONE" | cut -d- -f1-2)"
   dotenv set "GOOGLE_ZONE" "$GOOGLE_ZONE"
   dotenv set "GOOGLE_REGION" "$GOOGLE_REGION"
@@ -92,4 +95,14 @@ if ! dotenv contains "USER"; then
       --suggest "$(whoami)" \
       --priority "parameter hubstate history suggested default empty"
   fi
+fi
+
+if ! dotenv contains "GOOGLE_GKE_CLUSTER_SA"; then
+  GKE_SA="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" | yq e '.nodeConfig.serviceAccount')"
+  if test "$GKE_SA" = "default"; then
+    GCP_NUM="$(gcloud projects describe "$GOOGLE_PROJECT" | yq e '.projectNumber')"
+    GKE_SA="$GCP_NUM-compute@developer.gserviceaccount.com"
+  fi
+  echo "* Retrieved cluster service account: $GKE_SA"
+  dotenv set "GOOGLE_GKE_CLUSTER_SA" "$GKE_SA"
 fi
