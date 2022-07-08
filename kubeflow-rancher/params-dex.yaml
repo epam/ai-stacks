@@ -2,7 +2,7 @@ parameters:
 - name: component.dex
   parameters: 
   - name: namespace
-    value: kube-ingress
+    value: kube-system
   - name: authproxy.cookieExpire
     value: "'24h0m0s'"  
   - name: passwordDb.email

@@ -108,11 +108,10 @@ extensions:
   - params-mysql.yaml
   - params-kubeflow.yaml
   configure:
-    - bin/rancher-kubeconfig
-    - bin/gen-oidc-secrets
     - kubernetes
+    - bin/check-cluster
+    - bin/gen-oidc-secrets
     - env
   deploy:
     before:
     - kubernetes
-    - ./bin/check-cluster
