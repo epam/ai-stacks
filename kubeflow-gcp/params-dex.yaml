@@ -1,10 +1,10 @@
 parameters:
 - name: component.dex
-  parameters: 
+  parameters:
   - name: namespace
     value: kube-ingress
   - name: authproxy.cookieExpire
-    value: "'24h0m0s'"  
+    value: "'24h0m0s'"
   - name: passwordDb.email
     brief: Kubeflow admin user name
     fromEnv: USER
