@@ -83,16 +83,6 @@ components:
     depends:
       - dex
 
-  - name: kubeflow-rbac
-    source:
-      dir: components/kubeflow-rbac
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-common
-    depends:
-      - dex
-      - kubeflow-common
-
   - name: kubeflow-authn
     source:
       dir: components/kubeflow-authn
@@ -126,6 +116,28 @@ components:
       - kubeflow-profiles
       - kubeflow-common
 
+  - name: kubeflow-metadata
+    source:
+      dir: components/kubeflow-metadata
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-metadata
+    depends:
+      - kubeflow-common
+      - mysql-metadata
+
+  - name: kubeflow-pipelines
+    source:
+      dir: components/kubeflow-pipeline
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-pipeline
+    depends:
+      - kubeflow-profiles
+      - kubeflow-metadata
+      - mysql-pipeline
+      - minio
+
 extensions:
   include:
     - params.yaml
@@ -135,6 +147,7 @@ extensions:
     - params-argo.yaml
     - params-mysql.yaml
     - params-kubeflow.yaml
+    - params-kubeflow-pipelines.yaml
   configure:
     - kubernetes
     - bin/check-cluster

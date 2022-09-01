@@ -52,4 +52,4 @@ parameters:
 outputs:
 - name: minio.url
   brief: Minio Web Console
-  value: http://minio.${dns.domain}
+  value: ${component.ingress.protocol}://minio.${dns.domain}

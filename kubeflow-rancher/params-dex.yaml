@@ -12,14 +12,3 @@ parameters:
   - name: passwordDb.password
     brief: Kubeflow admin user password
     fromEnv: DEX_PASSWORD
-  # - name: connectors.ldap
-  #   empty: allow
-  #   parameters:
-  #   - name: host
-  #   - name: dn
-  #   - name: password
-  #   - name: search.dn
-  #   - name: search.usernameAttr
-  #   - name: search.filter
-  #   - name: search.idAttr
-  #   - name: groupSearch.dn
