@@ -32,9 +32,6 @@ extensions:
     - bin/gen-oidc-secrets
     - kubernetes
     - env
-  deploy:
-    before:
-      - bin/check-gke-running
 
 components:
   - name: external-dns
@@ -43,7 +40,6 @@ components:
       git:
         remote: https://github.com/agilestacks/google-components.git
         subDir: external-dns
-        ref: tags/v1.5.0
     hooks:
       - file: bin/create-dns-admin-sa
         triggers: [pre-deploy]
@@ -58,7 +54,6 @@ components:
       git:
         remote: https://github.com/agilestacks/google-components.git
         subDir: cert-manager
-        ref: tags/v1.5.0
 
   - name: nginx
     source:
@@ -66,7 +61,6 @@ components:
       git:
         remote: https://github.com/agilestacks/google-components.git
         subDir: nginx
-        ref: tags/v1.5.0
     depends:
       - cert-manager
       - external-dns
@@ -372,7 +366,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-stacks.git
         subDir: apps/replikate/kustomize
-        ref: tags/v1.5.0
+        ref: v1.5.0
     depends:
       - minio
       - istio-ingressgateway
