@@ -7,7 +7,7 @@ parameters:
   - name: port
     value: 9000
   - name: endpoint
-    value: ${component.ingress.protocol}://minio.${component.minio.namespace}.svc.cluster.local:9000
+    value: http://minio.${component.minio.namespace}.svc.cluster.local:9000
   - name: name
     fromEnv: ML_PIPELINES_BUCKET
     default: mlpipelines

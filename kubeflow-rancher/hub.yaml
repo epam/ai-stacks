@@ -5,12 +5,21 @@ requires:
   - kubernetes
 
 components:
-  - name: istio
+  - name: istio-base
     source:
-      dir: components/istio
+      dir: components/istio-base
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: istio
+        subDir: istio-base
+
+  - name: istio-discovery
+    source:
+      dir: components/istio-discovery
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: istio-discovery
+    depends:
+      - istio-base
 
   - name: istio-ingressgateway
     source:
@@ -19,7 +28,7 @@ components:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: istio-ingressgateway
     depends:
-      - istio
+      - istio-discovery
 
   - name: dex
     source:
@@ -92,7 +101,7 @@ components:
     depends:
       - dex
       - kubeflow-common
-      - istio
+      - istio-ingressgateway
 
   - name: kubeflow-profiles
     source:
@@ -101,7 +110,7 @@ components:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-profiles
     depends:
-      - istio
+      - istio-ingressgateway
       - kubeflow-authn
       - kubeflow-common
 
