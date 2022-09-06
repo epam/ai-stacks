@@ -46,7 +46,7 @@ fi
 if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   echo "* Configuring storage class for kubernetes"
   kubectl get sc | ident |  color g
-  echo 
+  echo
   is_defult="storageclass.kubernetes.io/is-default-class"
   sc=$(kubectl get storageclass -o json \
       |     jq -cMr --arg "is_default" "$is_defult" '.items[].metadata | select(.annotations[$is_default]=="true").name | select(.)')
@@ -61,9 +61,9 @@ if test "$gce_ingress_enabled" = "true"; then
   cat << EOF | color e
 Error: It looks like incompatible addon httpLoadBalancing has been enabled
 
-This addon is not compatible with ingress of this stack. 
-We deploy "nginx" instead. This ingress controller allows 
-to more fine grained do customization of ingress hosts 
+This addon is not compatible with ingress of this stack.
+We deploy "nginx" instead. This ingress controller allows
+to more fine grained do customization of ingress hosts
 that has been required by Kubeflow
 
 You can disable this addon by running and then restart this command:
@@ -82,7 +82,7 @@ fi
 
 if ! dotenv contains "USER"; then
   echo "* Getting user account from gcloud"
-  user="$(gcloud --format=json auth list | jq -cMr --arg u "$USER" '.[] | [select(.status == "ACTIVE"), {account: $u}] | first | .account')"
+  user="$(gcloud auth list --verbosity=none --filter=status:ACTIVE --format="json(account)" | jq -cMr --arg u "$USER" '. += [{"account":$u}] | first | .account')"
   if test -n "$user"; then
     ask env "USER" \
       --message 'Kubeflow admin username' \
