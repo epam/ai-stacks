@@ -114,16 +114,15 @@ components:
       - kubeflow-authn
       - kubeflow-common
 
-  - name: kubeflow-centraldashboard
+  - name: kubeflow-katib
     source:
-      dir: components/kubeflow-centraldashboard
+      dir: components/kubeflow-katib
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: kubeflow-centraldashboard
+        subDir: kubeflow-katib
     depends:
-      - istio-ingressgateway
-      - kubeflow-profiles
       - kubeflow-common
+      - mysql-katib
 
   - name: kubeflow-webhooks
     source:
@@ -167,6 +166,17 @@ components:
       - kubeflow-metadata
       - mysql-pipeline
       - minio
+
+  - name: kubeflow-centraldashboard
+    source:
+      dir: components/kubeflow-centraldashboard
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-centraldashboard
+    depends:
+      - istio-ingressgateway
+      - kubeflow-profiles
+      - kubeflow-common
 
 extensions:
   include:
