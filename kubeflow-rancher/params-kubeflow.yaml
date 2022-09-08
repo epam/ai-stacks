@@ -5,8 +5,6 @@ parameters:
     value: kubeflow
   - name: namespace
     value: kubeflow
-  - name: version
-    value: v1.5.1
   - name: authn.oidcRedirectURI
     value: ${component.ingress.protocol}://${component.kubeflow.name}.${dns.domain}/login/oidc
   - name: authn.oidcSecret

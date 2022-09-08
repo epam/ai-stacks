@@ -125,6 +125,15 @@ components:
       - kubeflow-profiles
       - kubeflow-common
 
+  - name: kubeflow-webhooks
+    source:
+      dir: components/kubeflow-webhooks
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-webhooks
+    depends:
+      - kubeflow-common
+
   - name: kubeflow-metadata
     source:
       dir: components/kubeflow-metadata
