@@ -134,6 +134,18 @@ components:
     depends:
       - kubeflow-common
 
+  - name: kubeflow-jupyter
+    source:
+      dir: components/kubeflow-jupyter
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-jupyter
+    depends:
+      - istio-ingressgateway
+      - kubeflow-common
+      - kubeflow-profiles
+      - kubeflow-webhooks
+
   - name: kubeflow-metadata
     source:
       dir: components/kubeflow-metadata
@@ -165,6 +177,7 @@ extensions:
     - params-argo.yaml
     - params-mysql.yaml
     - params-kubeflow.yaml
+    - params-kubeflow-jupyter.yaml
     - params-kubeflow-pipelines.yaml
   configure:
     - kubernetes
