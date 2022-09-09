@@ -114,6 +114,17 @@ components:
       - kubeflow-authn
       - kubeflow-common
 
+  - name: kubeflow-volumes
+    source:
+      dir: components/kubeflow-volumes
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-volumes
+    depends:
+      - kubeflow-common
+      - kubeflow-profiles
+      - istio-ingressgateway
+
   - name: kubeflow-tensorboard
     source:
       dir: components/kubeflow-tensorboard
