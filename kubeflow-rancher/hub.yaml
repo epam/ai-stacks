@@ -114,6 +114,17 @@ components:
       - kubeflow-authn
       - kubeflow-common
 
+  - name: kubeflow-tensorboard
+    source:
+      dir: components/kubeflow-tensorboard
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kubeflow-tensorboard
+    depends:
+      - kubeflow-common
+      - kubeflow-profiles
+      - istio-ingressgateway
+
   - name: kubeflow-katib
     source:
       dir: components/kubeflow-katib
