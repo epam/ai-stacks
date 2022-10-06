@@ -1,32 +1,29 @@
 version: 1
 kind: stack
-meta:
-  name: GKE cluster with Istio
 
 components:
 - name: kubernetes
   source:
     dir: components/gke-gcloud
     git:
-      remote: https://github.com/agilestacks/google-components.git
+      remote: https://github.com/epam/google-components.git
       subDir: gke-gcloud
-      ref: noingress
 - name: kubernetes-node-pool
   source:
     dir: components/gke-gcloud-node-pool
     git:
-      remote: https://github.com/agilestacks/google-components.git
+      remote: https://github.com/epam/google-components.git
       subDir: gke-gcloud-node-pool
-      ref: noingress
   depends: [kubernetes]
 
 extensions:
   include:
   - params.yaml
   init:
-  - gcp  
+  - gcp
   configure:
   - gcp
+  - bin/configure-network
   - env
 
 requires:

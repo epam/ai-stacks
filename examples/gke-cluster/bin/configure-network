@@ -1,0 +1,30 @@
+#!/bin/sh -e
+
+ident() {
+  sed 's/^/  /'
+}
+
+echo "* Checking existing GCP networks"
+if dotenv contains "GKE_NETWORK"; then
+  echo "  GKE_NETWORK is already set"
+else
+  default="$(gcloud compute networks list --format json | jq -r 'first | .name')"
+  if test -n "$default"; then
+    gcloud compute networks list | ident | color g
+    ask env "GKE_NETWORK" -random --suggest "$default" -t "gcloud"
+  fi
+fi
+
+NETWORK="$(params value component.gke.network)"
+SUBNET_MODE="$(gcloud compute networks list --filter="name=($NETWORK)" --format json | jq -r 'first | .x_gcloud_subnet_mode | select(.)')"
+
+if test "$SUBNET_MODE" = "CUSTOM"; then
+  echo "* Setting subnet for network $NETWORK due to: $SUBNET_MODE mode"
+  if dotenv contains "GKE_SUBNET"; then
+    echo "  GKE_SUBNET is already set"
+  else
+    SUBNET="$(gcloud compute networks subnets list --network "$NETWORK" --format json | jq -r 'first | .name')"
+    gcloud compute networks subnets list --network "$NETWORK" --regions "$GOOGLE_REGION" | ident | color g
+    ask env "GKE_SUBNET" -random --suggest "$SUBNET" -t "gcloud"
+  fi
+fi
