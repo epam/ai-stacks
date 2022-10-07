@@ -25,9 +25,17 @@ extensions:
   - gcp
   - bin/configure-network
   - env
+  - bin/test-user-permissions
 
 requires:
 - gcp
+
+parameters:
+- name: cloud.gcp.roles
+  value: >-
+    roles/dns.admin
+    roles/iam.serviceAccountCreator
+    roles/iam.serviceAccountDeleter
 
 lifecycle:
   verbs:
