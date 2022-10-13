@@ -1,4 +1,6 @@
 parameters:
+- name: component.ingress.host
+  component: seldon-core-operator
 - name: component.seldon
   parameters:
   - name: namespace

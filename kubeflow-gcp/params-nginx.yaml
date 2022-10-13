@@ -1,10 +1,13 @@
 parameters:
 - name: component
   parameters:
+  - name: ingress.host
+    value: kubeflow.${dns.domain}
   - name: ingress.namespace
     value: kube-ingress
   - name: ingress.protocol
-    value: https
+    value: http
+    # value: https
   - name: ingress.class
     brief: |
       Name of the existing Kubenretes ingress class

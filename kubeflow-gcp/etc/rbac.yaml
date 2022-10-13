@@ -1,0 +1,94 @@
+# Source: nginx-ingress/templates/rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nginx-nginx-ingress
+  labels:
+    app.kubernetes.io/name: nginx-nginx-ingress
+    helm.sh/chart: nginx-ingress-0.13.2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: nginx
+rules: 
+# - apiGroups:
+#   - ""
+#   resources:
+#   - services
+#   # - endpoints
+#   verbs:
+#   - get
+  # - list
+  # - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+# - apiGroups:
+#   - ""
+#   resources:
+#   - configmaps
+#   verbs:
+#   - get
+#   - list
+#   - watch
+#   - update
+#   - create
+# - apiGroups:
+#   - ""
+#   resources:
+#   - pods
+#   verbs:
+#   - list
+#   - watch
+# - apiGroups:
+#   - ""
+#   resources:
+#   - events
+#   verbs:
+#   - create
+#   - patch
+#   - list
+# - apiGroups:
+#   - networking.k8s.io
+#   resources:
+#   - ingresses
+#   verbs:
+#   - get
+#   - list
+#   - watch
+# - apiGroups:
+#   - networking.k8s.io
+#   resources:
+#   - ingressclasses
+#   verbs:
+#   - get
+# - apiGroups:
+#   - networking.k8s.io
+#   resources:
+#   - ingresses/status
+#   verbs:
+#   - update
+# - apiGroups:
+#   - k8s.nginx.org
+#   resources:
+#   - virtualservers
+#   - virtualserverroutes
+#   - globalconfigurations
+#   - transportservers
+#   - policies
+#   verbs:
+#   - list
+#   - watch
+#   - get
+# - apiGroups:
+#   - k8s.nginx.org
+#   resources:
+#   - virtualservers/status
+#   - virtualserverroutes/status
+#   - policies/status
+#   - transportservers/status
+#   verbs:
+#   - update

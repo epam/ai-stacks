@@ -1,26 +1,13 @@
 parameters:
-- name: component.kubeflow
-  parameters:
-  - name: name
-    value: kubeflow
-  - name: namespace
-    value: kubeflow
-  - name: version
-    value: v1.2.0
-  - name: version
-    component: kubeflow-centraldashboard
-    value: v1.5.0    
-  - name: version
-    component: kubeflow-volumes
-    value: v1.5.0  
-  - name: version
-    component: kubeflow-training-operator
-    value: v1.5.1  
+- name: component.kubeflow.name
+  value: kubeflow
+- name: component.kubeflow.namespace
+  value: kubeflow
 
-- name: component.kubebench
-  parameters:
-  - name: namespace
-    value: "${component.kubeflow.namespace}"
+# - name: component.kubebench
+#   parameters:
+#   - name: namespace
+#     value: "${component.kubeflow.namespace}"
 
 - name: component.kubeflow.authn
   component: kubeflow-authn
@@ -28,7 +15,7 @@ parameters:
   - name: oidcProvider
     value: ${component.ingress.protocol}://auth.${dns.domain}
   - name: oidcRedirectURI
-    value: https://${component.kubeflow.name}.${dns.domain}/login/oidc
+    value: ${component.ingress.protocol}://${component.ingress.host}/login/oidc
   - name: oidcSecret
     brief: | 
       OpenID connect client mutual trust secret between Dex and Argo
@@ -42,4 +29,4 @@ parameters:
 outputs:
 - name: kubeflow.url
   brief: Kubeflow Central Dashboard
-  value: ${component.ingress.protocol}://kubeflow.${dns.domain}
+  value: ${component.ingress.protocol}://${component.ingress.host}

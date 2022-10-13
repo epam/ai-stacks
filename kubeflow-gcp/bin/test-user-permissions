@@ -1,0 +1,91 @@
+#!/bin/bash -e
+
+GOOGLE_PROJECT="${GOOGLE_PROJECT:-$(dotenv get GOOGLE_PROJECT)}"
+GOOGLE_USER="$(gcloud auth list --format=json | jq -r '[.[]|select(.status == "ACTIVE")]|first|select(.).account')"
+
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf $TEMP_DIR' EXIT
+mkdir -p "$TEMP_DIR"
+
+if test -n "$*"; then
+  ROLES="$*"
+else
+  ROLES="$(params value 'cloud.gcp.roles' |  xargs)"
+fi
+
+if test -z "$ROLES"; then
+  color warn "No role specified in 'cloud.gcp.roles' parameter"
+  exit 0
+fi
+
+temp_file() {
+  echo "$TEMP_DIR/$(head -c 32 < /dev/urandom | base64 | tr -dc '[:lower:]')"
+}
+
+echo "Checking permissions for: $GOOGLE_USER"
+
+user_roles="$(temp_file)"
+gcloud projects get-iam-policy "$GOOGLE_PROJECT"  \
+  --flatten="bindings[].members" \
+  --format='json(bindings.role)' \
+  --filter="bindings.members:$GOOGLE_USER" \
+  | jq -cr '[.[].bindings.role?|select(.)]' > "$user_roles"
+
+TOKEN="$(gcloud auth print-access-token)"
+# shellcheck disable=SC2120
+can_i() {
+  curl -fs -X POST \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json; charset=utf-8" \
+    -d "@$1" \
+    "https://cloudresourcemanager.googleapis.com/v1/projects/$GOOGLE_PROJECT:testIamPermissions" > /dev/null
+}
+
+checkPermissions() {
+  local temp temp2 errors
+  temp="$(temp_file)"
+  echo -n "* Checking permissions from $1... "
+  if test -f "$1"; then
+    yq -o=json "$1" | jq '{permissions: to_entries[]|select(.key=="permissions" or .key=="includedPermissions").value}' > "$temp"
+  elif echo "$1" | grep -q 'roles/'; then
+    # if ! jq --arg role "$1" -e '.[]|select(. == $role)' "$user_roles" > /dev/null; then
+    #   errors="$errors  - $GOOGLE_USER is not bound to $1"
+    # fi
+    gcloud iam roles describe "$1" --format json | jq -cMr '{permissions:.includedPermissions}' > "$temp"
+  else
+    echo '{"permissions": ["'"$1"'"]}' > "$temp"
+  fi
+  if can_i "$temp"; then
+    color g "ok"
+  else
+    color err "missing (checking)..."
+    errors=""
+    for permission in $(jq -cMr '.permissions | join(" ")' < "$temp"); do
+      if test -f "$permission" || echo "$permission" | grep -q 'roles/'; then
+        if ! jq --arg role "$permission" -e '.[]|select(. == $role)' "$user_roles" > /dev/null; then
+          errors="$errors  - $GOOGLE_USER is not bound to $permission"
+        fi
+        echo "checking $permission"
+        checkPermissions "$permission"
+      else
+        temp2="$(temp_file)"
+        echo "{\"permissions\": [\"$permission\"]}" > "$temp2"
+        if ! can_i "$temp2"; then
+          errors="$errors  - $permission\n"
+        fi
+      fi
+    done
+  fi
+  if test -n "$errors"; then
+    echo -e "$errors" | color warn
+  fi  
+}
+
+echo "* User bound to roles:"
+for role in $(jq -cr '.[]' "$user_roles"); do
+  echo "  - $role"
+done
+
+for ROLE in $ROLES; do
+  checkPermissions "$ROLE"
+done

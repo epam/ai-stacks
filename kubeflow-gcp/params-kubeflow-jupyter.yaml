@@ -2,8 +2,8 @@ parameters:
 - name: component.kubeflow
   component: kubeflow-jupyter
   parameters:
-  - name: version
-    value: v1.4.1
+  # - name: version
+  #   value: v1.4.1
   - name: jupyter.workspaceVolume.storageClass
     brief: |
       Configuration for storage class for the notebooks

@@ -1,0 +1,74 @@
+#!/bin/bash -e
+
+ident() {
+  sed 's/^/  /'
+}
+
+if ! dotenv contains "HUB_KUBECONFIG"; then
+  color error "Kubeconfig has not been configured yet!"
+  exit 1
+fi
+
+# shellcheck disable=SC2155
+export KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
+cluster_name="$(dotenv get "GOOGLE_GKE_CLUSTER")"
+if test -z "$cluster_name"; then
+  color error "GOOGLE_GKE_CLUSTER is not set"
+  exit 1
+fi
+
+temp="$(mktemp)"
+trap 'rm -f "$temp"' EXIT
+
+echo "* Checking $cluster_name cluster addons"
+
+gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" --format="json" \
+  | jq '.addonsConfig' \
+  | tr '[:upper:]' '[:lower:]' > "$temp"
+
+checkAddon() {
+  jq --arg field "$2" --arg addon "$1" 'to_entries[]|select(.key==$addon).value|to_entries|first|select(.key==$field).value' "$temp"
+}
+
+addonEnabled() {
+  local enabled disabled
+  enabled="$(checkAddon "$1" "enabled")"
+  disabled="$(checkAddon "$1" "disabled")"
+  test "${enabled}" = "true" -o "${disabled}" = "false"
+}
+
+addonDisabled() {
+  local enabled disabled
+  enabled="$(checkAddon "$1" "enabled")"
+  disabled="$(checkAddon "$1" "disabled")"
+  test "${enabled}" = "false" -o "${disabled}" = "true" -o -z "${disabled}${enabled}"
+}
+
+errors=""
+required="$(params value 'cloud.gcp.gke.addons.required')"
+for addon in $required; do
+  echo -n "  Required addon $addon: "
+  lower="$(echo "$addon" | tr '[:upper:]' '[:lower:]')"
+  if addonEnabled "$lower"; then
+    color green "enabled"
+  else
+    color error "disabled"
+    errors="1"
+  fi
+done
+
+incompatible="$(params value 'cloud.gcp.gke.addons.incompatible')"
+for addon in $incompatible; do
+  echo -n "  Incompatible addon $addon: "
+  lower="$(echo "$addon" | tr '[:upper:]' '[:lower:]')"
+  if addonDisabled "$lower"; then
+    color green "disabled"
+  else
+    color error "enabled"
+    errors="1"
+  fi
+done
+
+if test -n "$errors"; then
+  exit 1
+fi

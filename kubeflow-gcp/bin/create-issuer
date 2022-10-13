@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if kubectl get clusterissuer "letsencrypt-superhub-io" 2>/dev/null; then
+  echo "Cluster issuer letsencrypt-superhub-io already exists"
+else 
+  cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: "letsencrypt-superhub-io"
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: viktorso@google.com
+    privateKeySecretRef:
+      name: "letsencrypt-superhub-io"
+    solvers:
+    - dns01:
+        cloudDNS:
+          project: $GOOGLE_PROJECT
+          serviceAccountSecretRef:
+            name: gcp-credentials
+            key: credentials.json
+EOF
+fi
