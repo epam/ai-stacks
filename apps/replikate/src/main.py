@@ -220,7 +220,7 @@ async def init_connection(logger, **_):
           [exec_conf["command"]] + exec_conf["args"], env=cmd_env_vars
       )
       parsed_out = json.loads(output)
-      token = parsed_out["status"]["token"]
+      token = parsed_out.get("status", {}).get("token")
     # NOTE: temporrarilly disabled EKS case, we possibly can gateway with code above
     # else:
     #   logger.info("Retrieving ")
