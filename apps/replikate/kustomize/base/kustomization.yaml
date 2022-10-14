@@ -10,7 +10,7 @@ configMapGenerator:
   literals:
   - INSTANCE_ID=replikate
   - CONFIG_DIR=/etc/manifests
-  - INTERVAL=300
+  - INTERVAL=5 minutes
   - ARGO_BUCKET_ACCESSKEY=access
   - ARGO_BUCKET_SECRETKEY=secret
 

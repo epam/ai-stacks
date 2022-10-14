@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
+from tkinter.messagebox import IGNORE
+from datetime import timedelta
 import kopf
 import pykube
 import logging
@@ -7,18 +9,32 @@ import yaml
 from os import environ, path
 from jinja2 import Environment, FileSystemLoader
 from glob import glob
+from kopf import not_
+from pytimeparse.timeparse import timeparse
+import subprocess
+import json
+
+def str_to_timedelta(value: str) -> timedelta:
+  try:
+    secs = float(value) * 60
+  except ValueError:
+    secs = timeparse(value)
+  return timedelta(seconds=secs)
 
 environ.setdefault("MANIFESTS_SOURCE", "replikate-operator-manifests")
 environ.setdefault("INSTANCE_ID", "kubeflow-replikdate")
 environ.setdefault("POLL_INTERVAL", "300")
 environ.setdefault("REMOTE_DEBUG", "disabled")
 
-CONFIGMAP     = environ["MANIFESTS_SOURCE"]
+CONFIGMAP     = environ.get("MANIFESTS_SOURCE")
 CONFIG_DIR    = environ["CONFIG_DIR"]
 INSTANCE_ID   = environ["INSTANCE_ID"]
-INTERVAL      = float(environ.get("INTERVAL", "30"))
+INTERVAL      = str_to_timedelta(environ["INTERVAL"])
+IGNORE_ANNOT  = f"superhub.io/{INSTANCE_ID}"
 
 FILTER_LABEL={"app.kubernetes.io/part-of": "kubeflow-profile"}
+
+IGNORE_NAMESPACES = []
 
 logging.info(f"Starging operator '{INSTANCE_ID}'...")
 if environ["REMOTE_DEBUG"] == "enabled":
@@ -27,6 +43,29 @@ if environ["REMOTE_DEBUG"] == "enabled":
   logging.info("Waiting to attach...")
   ptvsd.enable_attach(address=('0.0.0.0', 9229))
   ptvsd.wait_for_attach()
+
+
+@kopf.on.create('namespace')
+@kopf.on.update('namespace')
+@kopf.on.resume('namespace')
+def update_ignore_namespace(logger, name, meta, **_) -> bool:
+  """ Returns true if added to the ignore list """
+  labels={**meta.get('labels', {}), **meta.get('annotations', {})}
+  ignore_enabled = "enabled" == labels.get(IGNORE_ANNOT, "disabled")
+  if ignore_enabled and name not in IGNORE_NAMESPACES:
+    logger.info(f"Namespace {name} has ignore annotation, I will ignore all objects in it")
+    IGNORE_NAMESPACES.append(name)
+    return True
+  elif ignore_enabled and name in IGNORE_ANNOT:
+    logger.info(f"Namespace {name} has no more ignore annotation")
+    IGNORE_NAMESPACES.remove(name)
+  else:
+    owner = [own for own in meta.get('ownerReferences', []) if own.get('kind') == 'Profile' and path.dirname(own.get('apiVersion', '')) == 'kubeflow.org']
+    if not owner and name not in IGNORE_NAMESPACES:
+      logger.info(f"Namespace {name} is not part of Kubeflow Profile, I will ignore all objects in it")
+      IGNORE_NAMESPACES.append(name)
+      return True
+  return False
 
 
 def load_templates(_=None):
@@ -48,12 +87,13 @@ def load_templates(_=None):
   TEMPLATES = result
 
 
-@kopf.timer(
-  'v1', 'namespaces', labels={f"superhub.io/{INSTANCE_ID}": "enabled"}, initial_delay=120.0, interval=INTERVAL,
-)
-@kopf.on.create('namespaces', labels={f"superhub.io/{INSTANCE_ID}": "enabled"}|FILTER_LABEL,)
-@kopf.on.update('namespaces', labels={f"superhub.io/{INSTANCE_ID}": "enabled"}|FILTER_LABEL,)
-@kopf.on.resume('namespaces', labels={f"superhub.io/{INSTANCE_ID}": "enabled"}|FILTER_LABEL,)
+def namespace_ignored(name, **_) -> bool:
+  return name in IGNORE_NAMESPACES
+
+@kopf.timer('v1', 'namespaces', initial_delay=120.0, interval=INTERVAL, when=not_(namespace_ignored))
+@kopf.on.create('namespaces', when=not_(namespace_ignored))
+@kopf.on.update('namespaces', when=not_(namespace_ignored))
+@kopf.on.resume('namespaces', when=not_(namespace_ignored))
 def reconcile(logger, name, spec, body, patch, **_):
   """
   Triggered on profile change or periodically
@@ -101,19 +141,20 @@ def reconcile(logger, name, spec, body, patch, **_):
       resource.create()
 
 
-@kopf.on.create('v1', 'namespaces', labels={f"superhub.io/{INSTANCE_ID}": kopf.ABSENT}|FILTER_LABEL,)
-@kopf.on.update('v1', 'namespaces', labels={f"superhub.io/{INSTANCE_ID}": kopf.ABSENT}|FILTER_LABEL,)
-@kopf.on.resume('v1', 'namespaces', labels={f"superhub.io/{INSTANCE_ID}": kopf.ABSENT}|FILTER_LABEL,)
+@kopf.on.create('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
+@kopf.on.update('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
+@kopf.on.resume('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
 def add_instance_label(name, logger, patch, **_):
   logger.info(f"Starting to watch {name}")
   kopf.label(patch, {f"superhub.io/{INSTANCE_ID}": "enabled"})
 
 
-logging.info(f"Whatching configmap {CONFIGMAP}")
-@kopf.on.update('configmaps', field='metadata.name', value='CONFIGMAP')
-def reload_templates(name, logger, **_):
-  logger.info(f"Reloading: {CONFIG_DIR}")
-  load_templates()
+if CONFIGMAP:
+  logging.info(f"Whatching configmap {CONFIGMAP}")
+  @kopf.on.update('configmaps', field='metadata.name', value='CONFIGMAP')
+  def reload_templates(name, logger, **_):
+    logger.info(f"Reloading: {CONFIG_DIR}")
+    load_templates()
 
 
 @kopf.on.startup()
@@ -134,7 +175,7 @@ def configure(settings: kopf.OperatorSettings, **_):
 
 @kopf.on.startup()
 async def init_kubernetes_client(logger, **_):
-  global api, config
+  global api, config, Namespaces
   logger.info("Lading kubeconfig...")
   token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
   kubeconfig = environ.get("KUBECONFIG")
@@ -146,8 +187,20 @@ async def init_kubernetes_client(logger, **_):
     logger.info(f'From environment {kubeconfig}')
     config = pykube.KubeConfig.from_file(filename=kubeconfig)
   else:
-    raise ValueError("Unsupported auth method")
+    config = pykube.KubeConfig.from_file()
+
+  # WORKAROUND: pukube doesn't know how to deal with null values in kubeconfig
+  config.user.setdefault('exec', {})
+  config.user['exec']['args'] = config.user['exec'].get('args') or []
+  config.user['exec']['env'] = config.user['exec'].get('env') or []
+
   api = pykube.HTTPClient(config)
+  nss = pykube.Namespace.objects(api).all()
+  logger.info("Initializing namespaces...")
+  for ns in nss:
+    if update_ignore_namespace(logger, ns.name, ns.metadata,):
+      logger.info(f"Ignoring namespace {ns.name}")
+
 
 @kopf.on.login(errors=kopf.ErrorsMode.PERMANENT)
 async def init_connection(logger, **_):
@@ -157,14 +210,25 @@ async def init_connection(logger, **_):
   token = config.user.get('token')
   # Handling case if EKS
   if not cert and not pkey and not token:
-    exec = config.user.get('exec')
-    # check if eks
-    if exec and exec.get('apiVersion') == 'client.authentication.k8s.io/v1alpha1':
-      cluster = exec.get('args')[-1]
-      if cluster:
-        logger.info(f"Getting auth token for eks cluster {cluster}")
-        from eks_token import get_token
-        token = get_token(cluster_name=cluster)['status']['token']
+    exec_conf = config.user.get('exec')
+    if exec_conf.get('command'):
+      logger.info("Retrieving token...")
+      cmd_env_vars = dict(environ)
+      for env_var in exec_conf.get("env") or []:
+        cmd_env_vars[env_var["name"]] = env_var["value"]
+      output = subprocess.check_output(
+          [exec_conf["command"]] + exec_conf["args"], env=cmd_env_vars
+      )
+      parsed_out = json.loads(output)
+      token = parsed_out["status"]["token"]
+    # NOTE: temporrarilly disabled EKS case, we possibly can gateway with code above
+    # else:
+    #   logger.info("Retrieving ")
+    #   cluster = exec_conf.get('args')[-1]
+    #   if cluster:
+    #     logger.info(f"Getting auth token for eks cluster {cluster}")
+    #     from eks_token import get_token
+    #     token = get_token(cluster_name=cluster)['status']['token']
 
   return kopf.ConnectionInfo(
       server=config.cluster.get('server'),

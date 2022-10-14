@@ -12,8 +12,8 @@ bases:
 - "${component.replikate.kustomize.base}"
 
 images:
-- name: ${component.replikate.image}
-  newTag: ${component.replikate.imageTag}
+- name: gcr.io/superhub/kubeflow/replikate
+  newTag: 20221014-113848
 
 generatorOptions:
   disableNameSuffixHash: true

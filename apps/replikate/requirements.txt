@@ -4,4 +4,7 @@ ptvsd
 pydevd
 pyyaml
 Jinja2
+pytimeparse
+jinja2-humanize-extension
+urllib3==1.26.10
 # watchdog

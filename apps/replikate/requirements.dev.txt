@@ -3,3 +3,4 @@ autopep8
 pylint
 ptvsd
 eks-token
+pykube-ng[gcp]
