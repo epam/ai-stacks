@@ -1,10 +1,15 @@
 #!/bin/sh -e
 kubectl="kubectl -n $NAMESPACE"
 GOOGLE_SECRET_NAME="${GOOGLE_SECRET_NAME:-gcp-credentials}"
+GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$HOME/.config/gcloud/application_default_credentials.json}"
+if test ! -f "$GOOGLE_APPLICATION_CREDENTIALS"; then
+    echo "Error: $GOOGLE_APPLICATION_CREDENTIALS not found" >&2
+    exit 1
+fi
 
 if $kubectl get secret "$GOOGLE_SECRET_NAME" > /dev/null 2>&1; then
     echo "Secret $GOOGLE_SECRET_NAME already exists"
 else
-    $kubectl create secret generic "GOOGLE_SECRET_NAME" \
-        --from-file="credentials.json=$HOME/.config/gcloud/application_default_credentials.json"
+    $kubectl create secret generic "$GOOGLE_SECRET_NAME" \
+        --from-file="credentials.json=$GOOGLE_APPLICATION_CREDENTIALS"
 fi

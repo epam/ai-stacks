@@ -4,6 +4,9 @@ ident() {
   sed 's/^/  /'
 }
 
+PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
+export PATH
+
 if ! dotenv contains "HUB_KUBECONFIG"; then
   color error "Kubeconfig has not been configured yet!"
   exit 1
@@ -45,7 +48,7 @@ addonDisabled() {
 }
 
 errors=""
-required="$(params value 'cloud.gcp.gke.addons.required')"
+required="$(params value 'gke.addons.required')"
 for addon in $required; do
   echo -n "  Required addon $addon: "
   lower="$(echo "$addon" | tr '[:upper:]' '[:lower:]')"
@@ -57,7 +60,7 @@ for addon in $required; do
   fi
 done
 
-incompatible="$(params value 'cloud.gcp.gke.addons.incompatible')"
+incompatible="$(params value 'gke.addons.incompatible')"
 for addon in $incompatible; do
   echo -n "  Incompatible addon $addon: "
   lower="$(echo "$addon" | tr '[:upper:]' '[:lower:]')"

@@ -1,4 +1,22 @@
 parameters:
+- name: gcp.roles
+  brief: Enables pre-deployment check if user have got sufficient roles
+  value: >-
+    roles/dns.admin
+    roles/container.admin
+    roles/iam.workloadIdentityUser
+    roles/storage.admin
+
+# Currently not using this addon
+# - name: gke.addons.required
+#   value: >-
+#     configConnectorConfig
+
+- name: gke.addons.incompatible
+  brief: Enables pre-deployment check for unsupported GKE addons
+  value: >-
+    httpLoadBalancing   
+
 - name: projectId
   fromEnv: GOOGLE_PROJECT
 - name: stateBucketName

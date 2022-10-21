@@ -1,3 +1,0 @@
-permissions:
-- resourcemanager.projects.setIamPolicy
-- iam.serviceAccounts.setIamPolicy

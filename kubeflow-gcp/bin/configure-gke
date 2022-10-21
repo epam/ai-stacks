@@ -4,6 +4,9 @@ ident() {
   sed 's/^/  /'
 }
 
+PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
+export PATH
+
 if ! dotenv contains "HUB_KUBECONFIG"; then
   domain="$(dotenv get "HUB_DOMAIN_NAME")"
   dotenv set "HUB_KUBECONFIG" "$(files abspath ".hub/env/$domain.kubeconfig")"

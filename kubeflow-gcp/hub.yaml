@@ -33,18 +33,6 @@ extensions:
     # - bin/test-user-permissions
     - bin/test-required-addons
 
-parameters:
-- name: cloud.gcp.roles
-  value: >-
-    roles/dns.admin
-    roles/container.admin
-- name: cloud.gcp.gke.addons.required
-  value: >-
-    configConnectorConfig
-- name: cloud.gcp.gke.addons.incompatible
-  value: >-
-    httpLoadBalancing    
-
 components:
   - name: external-dns
     source:

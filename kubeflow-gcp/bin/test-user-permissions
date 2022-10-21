@@ -1,8 +1,12 @@
 #!/bin/bash -e
 
+PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
+export PATH
+
 GOOGLE_PROJECT="${GOOGLE_PROJECT:-$(dotenv get GOOGLE_PROJECT)}"
 GOOGLE_USER="$(gcloud auth list --format=json | jq -r '[.[]|select(.status == "ACTIVE")]|first|select(.).account')"
 
+echo "Running as $GOOGLE_USER"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf $TEMP_DIR' EXIT
 mkdir -p "$TEMP_DIR"
@@ -10,11 +14,11 @@ mkdir -p "$TEMP_DIR"
 if test -n "$*"; then
   ROLES="$*"
 else
-  ROLES="$(params value 'cloud.gcp.roles' |  xargs)"
+  ROLES="$(params value 'gcp.roles' |  xargs)"
 fi
 
 if test -z "$ROLES"; then
-  color warn "No role specified in 'cloud.gcp.roles' parameter"
+  color warn "No role specified in 'gcp.roles' parameter"
   exit 0
 fi
 
@@ -22,7 +26,6 @@ temp_file() {
   echo "$TEMP_DIR/$(head -c 32 < /dev/urandom | base64 | tr -dc '[:lower:]')"
 }
 
-echo "Checking permissions for: $GOOGLE_USER"
 
 user_roles="$(temp_file)"
 gcloud projects get-iam-policy "$GOOGLE_PROJECT"  \
@@ -44,7 +47,7 @@ can_i() {
 checkPermissions() {
   local temp temp2 errors
   temp="$(temp_file)"
-  echo -n "* Checking permissions from $1... "
+  echo -n "* Checking permissions for $1... "
   if test -f "$1"; then
     yq -o=json "$1" | jq '{permissions: to_entries[]|select(.key=="permissions" or .key=="includedPermissions").value}' > "$temp"
   elif echo "$1" | grep -q 'roles/'; then
@@ -71,20 +74,26 @@ checkPermissions() {
         temp2="$(temp_file)"
         echo "{\"permissions\": [\"$permission\"]}" > "$temp2"
         if ! can_i "$temp2"; then
-          errors="$errors  - $permission\n"
+          color err "  - $permission missing"
+          # errors="$errors  - $permission\n"
+        else
+          echo -n "  - $permission "
+          color g "ok"
         fi
       fi
     done
   fi
-  if test -n "$errors"; then
-    echo -e "$errors" | color warn
-  fi  
+  # if test -n "$errors"; then
+  #   echo -e "$errors" | color warn
+  # fi  
 }
 
-echo "* User bound to roles:"
-for role in $(jq -cr '.[]' "$user_roles"); do
-  echo "  - $role"
-done
+if test -z "$1"; then
+  echo "* User bound to roles:"
+  for role in $(jq -cr '.[]' "$user_roles"); do
+    echo "  - $role"
+  done
+fi
 
 for ROLE in $ROLES; do
   checkPermissions "$ROLE"
