@@ -3,9 +3,9 @@ parameters:
   component: kubeflow-jupyter
   parameters:
   # - name: version
-  #   value: v1.4.1
+  #   value: v1.6.1
   - name: jupyter.workspaceVolume.storageClass
     brief: |
       Configuration for storage class for the notebooks
-      see: https://github.com/kubeflow/manifests/blob/v1.1.0/jupyter/jupyter-web-app/base/configs/spawner_ui_config.yaml#L68
+      see: https://github.com/kubeflow/manifests/blob/v1.6.1/apps/jupyter/jupyter-web-app/upstream/base/configs/spawner_ui_config.yaml
     value: "${component.storage-class.name}"
