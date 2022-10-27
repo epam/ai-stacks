@@ -19,7 +19,6 @@ configMapGenerator:
   - configs/argo-artifacts.yaml
   - configs/namespace.yaml
   - configs/envoy-filter.yaml
-  - configs/pipeline-editor.yaml
   - configs/kfp-context.yaml
   - configs/rb-kserve-editor.yaml
   - configs/rb-kserve-viewer.yaml

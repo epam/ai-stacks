@@ -5,7 +5,7 @@ namespace: ${component.kubeflow.namespace}
 namePrefix: "${hub.componentName}-"
 
 commonLabels:
-  app.kubernetes.io/managed-by: superhub.io
+  app.kubernetes.io/managed-by: hubctl
   app.kubernetes.io/instance: ${hub.componentName}
 
 bases:
@@ -13,7 +13,7 @@ bases:
 
 images:
 - name: gcr.io/superhub/kubeflow/replikate
-  newTag: 20221014-113848
+  newTag: 20221027-170420
 
 generatorOptions:
   disableNameSuffixHash: true

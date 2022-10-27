@@ -2,6 +2,7 @@
 import asyncio
 from tkinter.messagebox import IGNORE
 from datetime import timedelta
+from pykube.exceptions import HTTPError
 import kopf
 import pykube
 import logging
@@ -13,6 +14,7 @@ from kopf import not_
 from pytimeparse.timeparse import timeparse
 import subprocess
 import json
+from requests.exceptions import HTTPError
 
 def str_to_timedelta(value: str) -> timedelta:
   try:
@@ -22,7 +24,7 @@ def str_to_timedelta(value: str) -> timedelta:
   return timedelta(seconds=secs)
 
 environ.setdefault("MANIFESTS_SOURCE", "replikate-operator-manifests")
-environ.setdefault("INSTANCE_ID", "kubeflow-replikdate")
+environ.setdefault("INSTANCE_ID", "kubeflow-replikate")
 environ.setdefault("POLL_INTERVAL", "300")
 environ.setdefault("REMOTE_DEBUG", "disabled")
 
@@ -30,13 +32,14 @@ CONFIGMAP     = environ.get("MANIFESTS_SOURCE")
 CONFIG_DIR    = environ["CONFIG_DIR"]
 INSTANCE_ID   = environ["INSTANCE_ID"]
 INTERVAL      = str_to_timedelta(environ["INTERVAL"])
-IGNORE_ANNOT  = f"superhub.io/{INSTANCE_ID}"
+OPERATOR_ENABLED  = f"hubctl.io/{INSTANCE_ID}"
 
 FILTER_LABEL={"app.kubernetes.io/part-of": "kubeflow-profile"}
 
 IGNORE_NAMESPACES = []
 
-logging.info(f"Starging operator '{INSTANCE_ID}'...")
+logging.info(f"Starting operator '{INSTANCE_ID}'...")
+logging.info(f"Watching for ignore annotation: {OPERATOR_ENABLED}=disabled")
 if environ["REMOTE_DEBUG"] == "enabled":
   import ptvsd
   logging.info("Opened debug port 9229")
@@ -51,17 +54,17 @@ if environ["REMOTE_DEBUG"] == "enabled":
 def update_ignore_namespace(logger, name, meta, **_) -> bool:
   """ Returns true if added to the ignore list """
   labels={**meta.get('labels', {}), **meta.get('annotations', {})}
-  ignore_enabled = "enabled" == labels.get(IGNORE_ANNOT, "disabled")
-  if ignore_enabled and name not in IGNORE_NAMESPACES:
+  ignore = labels.get(OPERATOR_ENABLED, "enabled") == "disabled"
+  if ignore and name not in IGNORE_NAMESPACES:
     logger.info(f"Namespace {name} has ignore annotation, I will ignore all objects in it")
     IGNORE_NAMESPACES.append(name)
     return True
-  elif ignore_enabled and name in IGNORE_ANNOT:
+  elif not ignore and name in OPERATOR_ENABLED:
     logger.info(f"Namespace {name} has no more ignore annotation")
     IGNORE_NAMESPACES.remove(name)
   else:
-    owner = [own for own in meta.get('ownerReferences', []) if own.get('kind') == 'Profile' and path.dirname(own.get('apiVersion', '')) == 'kubeflow.org']
-    if not owner and name not in IGNORE_NAMESPACES:
+    profile_owner = [own for own in meta.get('ownerReferences', []) if own.get('kind') == 'Profile' and path.dirname(own.get('apiVersion', '')) == 'kubeflow.org']
+    if not profile_owner and name not in IGNORE_NAMESPACES:
       logger.info(f"Namespace {name} is not part of Kubeflow Profile, I will ignore all objects in it")
       IGNORE_NAMESPACES.append(name)
       return True
@@ -98,7 +101,7 @@ def reconcile(logger, name, spec, body, patch, **_):
   """
   Triggered on profile change or periodically
   ---
-  Syncronies the resourcess describes as templates and propagate it to the profile
+  Synchronizes the resources describes as templates and propagate it to the profile
   """
   logger.info(f"Reconciling {name}")
   self_obj = deep_merge({}, body)
@@ -133,24 +136,31 @@ def reconcile(logger, name, spec, body, patch, **_):
       changed = deep_merge(resource.obj, data)
       if changed:
         logger.info(f"* {resource.kind.lower()}/{resource.name}: update {changed}")
-        resource.update()
+        try:
+          resource.update()
+        except HTTPError as e:
+          logger.exception(f"Failed to update {resource.kind.lower()}/{resource.name}")
+
       else:
         logger.debug(f"* {resource.kind.lower()}/{resource.name}: already up to date")
     else:
       logger.info(f"* {resource.kind.lower()}/{resource.name}: creating")
-      resource.create()
+      try:
+        resource.create()
+      except HTTPError as e:
+        logger.exception(f"Failed to create {resource.kind.lower()}/{resource.name}")
 
 
-@kopf.on.create('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
-@kopf.on.update('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
-@kopf.on.resume('v1', 'namespaces', labels={IGNORE_ANNOT: kopf.ABSENT}, when=not_(namespace_ignored))
+@kopf.on.create('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
+@kopf.on.update('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
+@kopf.on.resume('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
 def add_instance_label(name, logger, patch, **_):
   logger.info(f"Starting to watch {name}")
-  kopf.label(patch, {f"superhub.io/{INSTANCE_ID}": "enabled"})
+  kopf.label(patch, {OPERATOR_ENABLED: "enabled"})
 
 
 if CONFIGMAP:
-  logging.info(f"Whatching configmap {CONFIGMAP}")
+  logging.info(f"Watching configmap {CONFIGMAP}")
   @kopf.on.update('configmaps', field='metadata.name', value='CONFIGMAP')
   def reload_templates(name, logger, **_):
     logger.info(f"Reloading: {CONFIG_DIR}")
@@ -189,7 +199,7 @@ async def init_kubernetes_client(logger, **_):
   else:
     config = pykube.KubeConfig.from_file()
 
-  # WORKAROUND: pukube doesn't know how to deal with null values in kubeconfig
+  # WORKAROUND: pykube doesn't know how to deal with null values in kubeconfig
   config.user.setdefault('exec', {})
   config.user['exec']['args'] = config.user['exec'].get('args') or []
   config.user['exec']['env'] = config.user['exec'].get('env') or []
@@ -221,7 +231,7 @@ async def init_connection(logger, **_):
       )
       parsed_out = json.loads(output)
       token = parsed_out.get("status", {}).get("token")
-    # NOTE: temporrarilly disabled EKS case, we possibly can gateway with code above
+    # NOTE: temporary disabled EKS case, we possibly can gateway with code above
     # else:
     #   logger.info("Retrieving ")
     #   cluster = exec_conf.get('args')[-1]
