@@ -1,6 +1,0 @@
-parameters:
-- name: component.kubeflow
-  component: kubeflow-jupyter
-  parameters:
-  - name: jupyter.workspaceVolume.storageClass
-    value: ${component.storage-class.name}

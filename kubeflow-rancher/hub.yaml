@@ -11,6 +11,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: istio-base
+        ref: develop
 
   - name: istio-discovery
     source:
@@ -18,6 +19,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: istio-discovery
+        ref: develop
     depends:
       - istio-base
 
@@ -36,6 +38,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: dex
+        ref: develop
 
   - name: minio
     source:
@@ -43,34 +46,23 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: minio
+        ref: develop
 
-  - name: mysql-argo
+  - name: argo-db
+    source:
+      dir: components/postgresql
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: postgresql
+        ref: develop
+
+  - name: mysql-kubeflow
     source:
       dir: components/mysql
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: mysql
-
-  - name: mysql-pipeline
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-
-  - name: mysql-katib
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
-
-  - name: mysql-metadata
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/agilestacks/kubeflow-components.git
-        subDir: mysql
+        ref: develop
 
   - name: argo
     source:
@@ -78,8 +70,9 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: argo
+        ref: develop
     depends:
-      - mysql-argo
+      - argo-db
       - minio
       - dex
 
@@ -89,6 +82,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-common
+        ref: develop
     depends:
       - dex
 
@@ -98,6 +92,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-authn
+        ref: develop
     depends:
       - dex
       - kubeflow-common
@@ -109,6 +104,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-profiles
+        ref: develop
     depends:
       - istio-ingressgateway
       - kubeflow-authn
@@ -120,6 +116,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-volumes
+        ref: develop
     depends:
       - kubeflow-common
       - kubeflow-profiles
@@ -131,6 +128,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-tensorboard
+        ref: develop
     depends:
       - kubeflow-common
       - kubeflow-profiles
@@ -142,9 +140,10 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-katib
+        ref: develop
     depends:
       - kubeflow-common
-      - mysql-katib
+      - mysql-kubeflow
 
   - name: kubeflow-webhooks
     source:
@@ -152,6 +151,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-webhooks
+        ref: develop
     depends:
       - kubeflow-common
 
@@ -161,6 +161,7 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-jupyter
+        ref: develop
     depends:
       - istio-ingressgateway
       - kubeflow-common
@@ -173,9 +174,10 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-metadata
+        ref: develop
     depends:
       - kubeflow-common
-      - mysql-metadata
+      - mysql-kubeflow
 
   - name: kubeflow-pipelines
     source:
@@ -183,10 +185,11 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-pipeline
+        ref: develop
     depends:
       - kubeflow-profiles
       - kubeflow-metadata
-      - mysql-pipeline
+      - mysql-kubeflow
       - minio
 
   - name: kubeflow-centraldashboard
@@ -195,27 +198,39 @@ components:
       git:
         remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: kubeflow-centraldashboard
+        ref: develop
     depends:
       - istio-ingressgateway
       - kubeflow-profiles
       - kubeflow-common
 
+  - name: kuller
+    source:
+      dir: components/kuller
+    depends:
+      - kubeflow-jupyter
+
+  - name: replikate
+    source:
+      dir: ../apps/replikate/kustomize/
+      ref: develop
+    depends:
+      - minio
+      - argo
+
 extensions:
   include:
     - params.yaml
     - params-minio.yaml
-    - params-istio.yaml
-    - params-dex.yaml
     - params-argo.yaml
     - params-mysql.yaml
     - params-kubeflow.yaml
-    - params-kubeflow-jupyter.yaml
-    - params-kubeflow-pipelines.yaml
   configure:
     - kubernetes
-    - bin/check-cluster
+    - bin/configure-cluster
     - bin/gen-oidc-secrets
     - env
   deploy:
     before:
       - kubernetes
+      - bin/check-cluster

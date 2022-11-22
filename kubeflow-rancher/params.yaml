@@ -1,15 +1,19 @@
 parameters:
 - name: kubernetes.context
-  env: HUB_KUBECONTEXT
+  fromEnv: HUB_KUBECONTEXT
   default: rancher-desktop
 - name: dns.domain
   value: localhost
-- name: component.storage-class.name
-  value: local-path
-- name: component.ingress
-  parameters:
-  - name: protocol
-    value: http
-  - name: host
-    value: minio.localhost
-    componetn: minio
+- name: storage.class
+  fromEnv: STORAGE_CLASS
+- name: ingress.protocol
+  value: http
+- name: dex.authproxy.cookieExpire
+  value: "'24h0m0s'"
+- name: dex.passwordDb.email
+  brief: Kubeflow admin user name
+  fromEnv: USER
+  default: admin@kubeflow.local
+- name: dex.passwordDb.password
+  brief: Kubeflow admin user password
+  fromEnv: DEX_PASSWORD
