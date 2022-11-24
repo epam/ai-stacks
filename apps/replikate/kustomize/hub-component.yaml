@@ -10,20 +10,18 @@ requires:
 
 parameters:
 - name: dns.domain
-- name: component
-  parameters:
-  - name: ingress.protocol
-  - name: ingress.host
-  - name: bucket.accessKey
-  - name: bucket.secretKey
-  - name: bucket.endpoint
-  - name: bucket.region
-  - name: kubeflow.namespace
-    value: kubeflow
-    env: NAMESPACE
-  - name: replikate.kustomize.base
-    value: hub
-    env: KUSTOMIZE_BASE
+- name: ingress.protocol
+- name: ingress.host
+- name: bucket.accessKey
+- name: bucket.secretKey
+- name: bucket.endpoint
+- name: bucket.region
+- name: kubeflow.namespace
+  value: kubeflow
+  env: NAMESPACE
+- name: kustomize.base
+  value: hub
+  env: KUSTOMIZE_BASE
 
 templates:
   files:

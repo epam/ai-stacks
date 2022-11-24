@@ -25,16 +25,14 @@ def str_to_timedelta(value: str) -> timedelta:
 
 environ.setdefault("MANIFESTS_SOURCE", "replikate-operator-manifests")
 environ.setdefault("INSTANCE_ID", "kubeflow-replikate")
-environ.setdefault("POLL_INTERVAL", "300")
 environ.setdefault("REMOTE_DEBUG", "disabled")
+environ.setdefault("INTERVAL", "2 minutes")
 
 CONFIGMAP     = environ.get("MANIFESTS_SOURCE")
 CONFIG_DIR    = environ["CONFIG_DIR"]
 INSTANCE_ID   = environ["INSTANCE_ID"]
 INTERVAL      = str_to_timedelta(environ["INTERVAL"])
 OPERATOR_ENABLED  = f"hubctl.io/{INSTANCE_ID}"
-
-FILTER_LABEL={"app.kubernetes.io/part-of": "kubeflow-profile"}
 
 IGNORE_NAMESPACES = []
 
@@ -55,20 +53,21 @@ def update_ignore_namespace(logger, name, meta, **_) -> bool:
   """ Returns true if added to the ignore list """
   labels={**meta.get('labels', {}), **meta.get('annotations', {})}
   ignore = labels.get(OPERATOR_ENABLED, "enabled") == "disabled"
+  result = False;
   if ignore and name not in IGNORE_NAMESPACES:
     logger.info(f"Namespace {name} has ignore annotation, I will ignore all objects in it")
     IGNORE_NAMESPACES.append(name)
-    return True
+    result = True
   elif not ignore and name in OPERATOR_ENABLED:
     logger.info(f"Namespace {name} has no more ignore annotation")
     IGNORE_NAMESPACES.remove(name)
   else:
     profile_owner = [own for own in meta.get('ownerReferences', []) if own.get('kind') == 'Profile' and path.dirname(own.get('apiVersion', '')) == 'kubeflow.org']
     if not profile_owner and name not in IGNORE_NAMESPACES:
-      logger.info(f"Namespace {name} is not part of Kubeflow Profile, I will ignore all objects in it")
+      logger.info(f"Ignoring all objects in namespace {name}")
       IGNORE_NAMESPACES.append(name)
-      return True
-  return False
+      result = True
+  return result
 
 
 def load_templates(_=None):
@@ -97,13 +96,13 @@ def namespace_ignored(name, **_) -> bool:
 @kopf.on.create('namespaces', when=not_(namespace_ignored))
 @kopf.on.update('namespaces', when=not_(namespace_ignored))
 @kopf.on.resume('namespaces', when=not_(namespace_ignored))
-def reconcile(logger, name, spec, body, patch, **_):
+def reconcile_ns(logger, name, body, patch, **_):
   """
   Triggered on profile change or periodically
   ---
   Synchronizes the resources describes as templates and propagate it to the profile
   """
-  logger.info(f"Reconciling {name}")
+  logger.debug(f"Reconciling {name}")
   self_obj = deep_merge({}, body)
   # logger.info(f" >> {type(self_obj)}")
   params = {"name": name, "this": self_obj}
@@ -151,14 +150,6 @@ def reconcile(logger, name, spec, body, patch, **_):
         logger.exception(f"Failed to create {resource.kind.lower()}/{resource.name}")
 
 
-@kopf.on.create('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
-@kopf.on.update('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
-@kopf.on.resume('v1', 'namespaces', labels={OPERATOR_ENABLED: kopf.ABSENT}, when=not_(namespace_ignored))
-def add_instance_label(name, logger, patch, **_):
-  logger.info(f"Starting to watch {name}")
-  kopf.label(patch, {OPERATOR_ENABLED: "enabled"})
-
-
 if CONFIGMAP:
   logging.info(f"Watching configmap {CONFIGMAP}")
   @kopf.on.update('configmaps', field='metadata.name', value='CONFIGMAP')
@@ -186,7 +177,6 @@ def configure(settings: kopf.OperatorSettings, **_):
 @kopf.on.startup()
 async def init_kubernetes_client(logger, **_):
   global api, config, Namespaces
-  logger.info("Lading kubeconfig...")
   token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
   kubeconfig = environ.get("KUBECONFIG")
   if path.isfile(token):
@@ -205,11 +195,6 @@ async def init_kubernetes_client(logger, **_):
   config.user['exec']['env'] = config.user['exec'].get('env') or []
 
   api = pykube.HTTPClient(config)
-  nss = pykube.Namespace.objects(api).all()
-  logger.info("Initializing namespaces...")
-  for ns in nss:
-    if update_ignore_namespace(logger, ns.name, ns.metadata,):
-      logger.info(f"Ignoring namespace {ns.name}")
 
 
 @kopf.on.login(errors=kopf.ErrorsMode.PERMANENT)

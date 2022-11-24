@@ -9,9 +9,9 @@ spec:
   desc: Allow minio access
   env:
   - name: AWS_S3_ENDPOINT
-    value: "${component.bucket.endpoint}"
+    value: "${bucket.endpoint}"
   - name: AWS_REGION
-    value: "${component.bucket.region}"
+    value: "${bucket.region}"
   - name: AWS_ACCESS_KEY_ID
     valueFrom:
       secretKeyRef:

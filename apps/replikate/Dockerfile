@@ -1,4 +1,4 @@
-ARG from=python:slim
+ARG from=python:3.10-slim
 FROM ${from}
 
 WORKDIR /app

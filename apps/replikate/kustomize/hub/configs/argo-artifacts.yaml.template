@@ -5,5 +5,5 @@ metadata:
   name: "argo-artifacts"
   namespace: "{{name}}"
 data:
-  accesskey: "${component.bucket.accessKey/base64}"
-  secretkey: "${component.bucket.secretKey/base64}"
+  accesskey: "${bucket.accessKey/base64}"
+  secretkey: "${bucket.secretKey/base64}"

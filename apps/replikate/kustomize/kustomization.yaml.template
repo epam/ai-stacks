@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: ${component.kubeflow.namespace}
+namespace: ${kubeflow.namespace}
 namePrefix: "${hub.componentName}-"
 
 commonLabels:
@@ -9,11 +9,11 @@ commonLabels:
   app.kubernetes.io/instance: ${hub.componentName}
 
 bases:
-- "${component.replikate.kustomize.base}"
+- "${kustomize.base}"
 
 images:
 - name: gcr.io/superhub/kubeflow/replikate
-  newTag: 20221027-170420
+  newTag: 20221124-145950
 
 generatorOptions:
   disableNameSuffixHash: true
