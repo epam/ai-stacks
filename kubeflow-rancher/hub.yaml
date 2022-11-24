@@ -204,12 +204,6 @@ components:
       - kubeflow-profiles
       - kubeflow-common
 
-  - name: kuller
-    source:
-      dir: components/kuller
-    depends:
-      - kubeflow-jupyter
-
   - name: replikate
     source:
       dir: ../apps/replikate/kustomize/

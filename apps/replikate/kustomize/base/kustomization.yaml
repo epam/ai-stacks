@@ -23,8 +23,10 @@ configMapGenerator:
   - configs/rb-kserve-editor.yaml
   - configs/rb-kserve-viewer.yaml
   - configs/rb-kubeflow-serving-editor.yaml
-  - configs/role-kserve.yaml
   - configs/rb-kserve.yaml
+  - configs/rb-mlpipelines.yaml
+  - configs/role-kserve.yaml
+  - configs/role-mlpipelines.yaml
 
 vars:
 - name: MANIFESTS

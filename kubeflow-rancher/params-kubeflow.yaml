@@ -15,6 +15,11 @@ parameters:
   - name: authn.volumeSize
     value: 1Gi
 
+  # Kubeflow v1.6.1 points to KFP 2.0alpha while stable 1.8.2 (from v1.5.1)
+- name: kubeflow.version
+  component: kubeflow-pipelines
+  value: v1.5.1
+
 - name: ingress.host
   component: istio-ingressgateway
   value: kubeflow.${dns.domain}
@@ -42,6 +47,21 @@ parameters:
     fromEnv: ML_PIPELINES_BUCKET
     default: mlpipelines
     brief: Name of the bucket used across KFP, Minio and Argo
+
+- name: bucket
+  component: replikate
+  parameters:
+  - name: host
+    value: minio.${minio.namespace}.svc.cluster.local
+  - name: port
+    value: 9000
+  - name: endpoint
+    value: http://minio.${minio.namespace}.svc.cluster.local:9000
+  - name: name
+    fromEnv: ML_PIPELINES_BUCKET
+    default: mlpipelines
+  - name: insecure
+    value: 'true'
 
 outputs:
 - name: kubeflow.url

@@ -12,10 +12,16 @@ parameters:
 - name: dns.domain
 - name: ingress.protocol
 - name: ingress.host
+- name: bucket.endpoint
+  value: ${ingress.protocol}://${bucket.host}:${bucket.port}
+- name: bucket.host
+- name: bucket.name
+- name: bucket.port
+- name: bucket.insecure
+  value: 'true'
+- name: bucket.region
 - name: bucket.accessKey
 - name: bucket.secretKey
-- name: bucket.endpoint
-- name: bucket.region
 - name: kubeflow.namespace
   value: kubeflow
   env: NAMESPACE

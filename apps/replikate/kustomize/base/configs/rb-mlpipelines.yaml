@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mlpipelines-manager
+  namespace: "{{name}}"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mlpipelines-manager
+  namespace: "{{name}}"
+subjects:
+- kind: ServiceAccount
+  name: default-editor
+  namespace: "{{name}}"
+- kind: User
+  name: "{{this.metadata.annotations.owner}}"
+  apiGroup: rbac.authorization.k8s.io
+- kind: User
+  name: "{{name}}"
+  apiGroup: rbac.authorization.k8s.io

@@ -7,18 +7,7 @@ rules:
 - apiGroups:
   - serving.kubeflow.org
   - serving.kserve.io
-  resources:
-  - inferenceservices
-  - inferenceservices/status
-  - inferenceservices/finalizers
-  - trainedmodels
-  - trainedmodels/status
-  - servingruntimes
-  - servingruntimes/status
-  - servingruntimes/finalizers
-  - clusterservingruntimes
-  - clusterservingruntimes/finalizers
-  - clusterservingruntimes/status
+  resources: ["*"]
   verbs:
   - get
   - list
@@ -29,15 +18,7 @@ rules:
   - patch
   - update
 - apiGroups: [serving.knative.dev]
-  resources:
-  - services
-  - services/status
-  - routes
-  - routes/status
-  - configurations
-  - configurations/status
-  - revisions
-  - revisions/status
+  resources: ["*"]
   verbs:
   - get
   - list

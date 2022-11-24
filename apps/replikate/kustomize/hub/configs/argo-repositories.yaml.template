@@ -1,0 +1,21 @@
+# see: https://argoproj.github.io/argo-workflows/artifact-repository-ref/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artifact-repositories
+  namespace: "{{name}}"
+  annotations:
+    # v3.0 and after - if you want to use a specific key, put that key into this annotation.
+    workflows.argoproj.io/default-artifact-repository: default-artifact-repository
+data:
+  default-artifact-repository: |
+    s3:
+      bucket: ${bucket.name}
+      endpoint: "${bucket.host}:${bucket.port}"
+      insecure: ${bucket.insecure}
+      accessKeySecret:
+        name: argo-artifacts
+        key: accesskey
+      secretKeySecret:
+        name: argo-artifacts
+        key: secretkey
