@@ -4,7 +4,7 @@ kind: Config
 #   name: app-
 build:
   artifacts:
-  - image: gcr.io/superhub/kubeflow/replikate
+  - image: ghcr.io/epam/kubeflow/replikate
     sync:
       manual:
       - src: "src/*.py"
