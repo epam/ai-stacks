@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+
+SKAFFOLD_IMAGE="${SKAFFOLD_IMAGE:?SKAFFOLD_IMAGE is not set}"
+TMPDIR=$(mktemp -d)
+trap 'rm -rf $TMPDIR' EXIT
+mkdir -p "$TMPDIR"
+
+(
+    cp -r kustomize/kustomization.yaml.template "$TMPDIR/kustomization.yaml"
+    cd "$TMPDIR"
+    ls -al
+    kustomize edit set image "replikate=$SKAFFOLD_IMAGE"
+)
+
+cat "$TMPDIR/kustomization.yaml" > kustomize/kustomization.yaml.template

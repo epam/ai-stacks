@@ -1,10 +1,14 @@
-apiVersion: skaffold/v1
+apiVersion: skaffold/v3
 kind: Config
 # metadata:
 #   name: app-
 build:
   artifacts:
   - image: replikate
+    hooks:
+      after:
+      - command: ["bin/set-image"]
+        # os: [darwin, linux]
     sync:
       manual:
       - src: "src/*.py"
@@ -13,9 +17,9 @@ build:
   tagPolicy:
     dateTime:
       format: 20060102-150405
-deploy:
+manifests:
   kustomize:
-    path: "kustomize/skaffold"
+    paths: ["kustomize/skaffold"]
 profiles:
 - activation:
   - env: KUBECONFIG=!
