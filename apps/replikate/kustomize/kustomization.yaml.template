@@ -12,8 +12,9 @@ bases:
 - "${kustomize.base}"
 
 images:
-- name: gcr.io/superhub/kubeflow/replikate
-  newTag: 20221124-145950
+- name: replikate
+  newImage: ghcr.io/epam/hub-kubeflow-stacks/replikate
+  newTag: 20221224-215506
 
 generatorOptions:
   disableNameSuffixHash: true
