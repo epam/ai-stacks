@@ -4,7 +4,7 @@ kind: Config
 #   name: app-
 build:
   artifacts:
-  - image: ghcr.io/epam/kubeflow/replikate
+  - image: replikate
     sync:
       manual:
       - src: "src/*.py"
@@ -22,7 +22,7 @@ profiles:
   build:
     local:
       useBuildkit: false
-      useDockerCLI: false
+      useDockerCLI: true
   name: local
 - build:
     cluster:

@@ -16,7 +16,7 @@ spec:
       serviceAccountName: app
       containers:
       - name: main
-        image: gcr.io/superhub/kubeflow/replikate:20210125-190117
+        image: replikate
         imagePullPolicy: Always
         # ports:
         #   - containerPort: 9229

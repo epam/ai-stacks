@@ -1,6 +1,11 @@
 ARG from=python:3.10-slim
 FROM ${from}
 
+LABEL org.opencontainers.image.source="https://github.com/epam/hub-kubeflow-stacks"
+LABEL org.opencontainers.image.authors="Antons Kranga <antons_kranga@epam.com>"
+LABEL org.opencontainers.image.description="Replicates configuration across multiple namespaces"
+LABEL org.opencontainers.image.licenses=MPL-2.0
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \

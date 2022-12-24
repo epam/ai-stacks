@@ -62,23 +62,33 @@ To run tests from vscode in debug
 ### Integration Tests
 
 To be implemented when logic of the operator will become more complex. (see: https://kopf.readthedocs.io/en/stable/testing/)
+
+### Setup GHCR
+
+* Generate access token to: https://github.com/settings/tokens/new?scopes=write:packages
+  
+  > You need to setup: `write:packages` scope to be able to push images to GHCR. For more info [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+
+* Save it as `GITHUB_TOKEN` in your environment (see below)
+
+* GHCR image can be viewed here: https://github.com/orgs/epam/packages/container/package/hub-kubeflow-stacks%2Freplikate
+
+```bash
+export GITHUB_TOKEN="your token" 
+echo "$GITHUB_TOKEN" | docker login "ghcr.io" -u "akranga" --password-stdin
+
+export SKAFFOLD_DEFAULT_REPO="ghcr.io/epam/hub-kubeflow-stacks"
+```
+
 ### Environment variables
 
 Setup skaffold defaults:
 ```bash
 # private repo will have different default repo
-# export SKAFFOLD_DEFAULT_REPO="myprivaterepo"
-export SKAFFOLD_DEFAULT_REPO="public.ecr.aws/b6s5p9p4"
 export SKAFFOLD_PROFILE="local"
 export SKAFFOLD_NAMESPACE="default"
 export SKAFFOLD_CACHE_ARTIFACTS="default"
 export SKAFFOLD_CACHE_ARTIFACTS="true"
-```
-
-Setup for AWS (optional)
-```bash
-aws ecr-public get-login-password --region "us-east-1" \
-| docker login --username AWS --password-stdin "$SKAFFOLD_DEFAULT_REPO"
 ```
 
 ### Remote debug
@@ -120,3 +130,4 @@ kopf run main.py --log-format=plain --dev --standalone
 It will stop waiting for you to attach with `PTVSD`
 
 3. Launch debug task: `profiles: attach localhost`
+
