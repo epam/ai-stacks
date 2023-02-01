@@ -16,7 +16,7 @@ spec:
       serviceAccountName: app
       containers:
       - name: main
-        image: replikate
+        image: ghcr.io/epam/hub-kubeflow-stacks/replikate:20221224-232153
         imagePullPolicy: Always
         # ports:
         #   - containerPort: 9229
