@@ -13,7 +13,7 @@ resources:
 
 images:
 - name: ghcr.io/epam/hub-kubeflow-stacks/replikate
-  newTag: 20230201-114915
+  newTag: 20221224-232153
 
 generatorOptions:
   disableNameSuffixHash: true
