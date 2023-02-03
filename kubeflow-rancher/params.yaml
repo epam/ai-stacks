@@ -5,19 +5,21 @@ parameters:
 - name: dns.domain
   value: localhost
 - name: storage.class
-  fromEnv: STORAGE_CLASS
-- name: ingress.protocol
-  value: http
-- name: dex.authproxy.cookieExpire
-  value: "'24h0m0s'"
-- name: dex.passwordDb.email
-  brief: Kubeflow admin user name
-  fromEnv: USER
-  default: admin@kubeflow.local
-- name: dex.passwordDb.password
-  brief: Kubeflow admin user password
-  fromEnv: DEX_PASSWORD
+  brief: |
+    Name of the existing Kubernetes storage class.
+    This class will be used to provision PVs for Kubeflow such and notebooks and databases
 
-- name: ingress.hosts
-  component: replikate
-  value: kubeflow.${dns.domain}
+    To check for available storage classes run: `kubectl get sc`
+  fromEnv: STORAGE_CLASS
+
+- name: dex
+  parameters:
+  - name: namespace
+    value: kube-ingress
+  - name: passwordDb.email
+    brief: Kubeflow admin user name
+    fromEnv: USER
+    default: admin@kubeflow.local
+  - name: passwordDb.password
+    brief: Kubeflow admin user password
+    fromEnv: DEX_PASSWORD

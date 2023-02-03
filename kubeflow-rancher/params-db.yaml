@@ -16,7 +16,7 @@ parameters:
     value: 8Gi
 
 - name: mysql
-  component: mysql-kubeflow
+  component: kubeflow-db
   parameters:
   - name: database
     value: pipelineDb
@@ -25,3 +25,21 @@ parameters:
       cachedb
       metadb
       katib      
+
+- name: postgresql
+  component: argo-db
+  parameters:
+  - name: namespace
+    value: argo
+  - name: volumeSize
+    value: 2Gi
+  - name: database
+    value: argo
+  - name: adminPassword
+    brief: Database admin password (all databases)
+    fromEnv: DATABASE_ROOT_PASSWORD
+  - name: user
+    value: argo
+  - name: password
+    brief: Database user password (all databases)
+    fromEnv: DATABASE_USER_PASSWORD

@@ -35,10 +35,6 @@ parameters:
       For possible number of replicas see: https://docs.min.io/docs/minio-erasure-code-quickstart-guide
     value: 1
 
-- name: ingress.hosts
-  component: minio
-  value: minio.${dns.domain}
-
 outputs:
 - name: minio.url
   brief: Minio Web Console

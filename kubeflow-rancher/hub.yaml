@@ -56,7 +56,7 @@ components:
         subDir: postgresql
         ref: develop
 
-  - name: mysql-kubeflow
+  - name: kubeflow-db
     source:
       dir: components/mysql
       git:
@@ -151,7 +151,7 @@ components:
         ref: develop
     depends:
       - kubeflow-common
-      - mysql-kubeflow
+      - kubeflow-db
 
   - name: kubeflow-webhooks
     source:
@@ -185,7 +185,7 @@ components:
         ref: develop
     depends:
       - kubeflow-common
-      - mysql-kubeflow
+      - kubeflow-db
 
   - name: kubeflow-pipelines
     source:
@@ -197,7 +197,7 @@ components:
     depends:
       - kubeflow-profiles
       - kubeflow-metadata
-      - mysql-kubeflow
+      - kubeflow-db
       - minio
 
   - name: kubeflow-centraldashboard
@@ -224,11 +224,11 @@ components:
 extensions:
   include:
     - params.yaml
-    - params-minio.yaml
-    - params-argo.yaml
-    - params-mysql.yaml
+    - params-db.yaml
+    - params-inference.yaml
+    - params-ingress.yaml
     - params-kubeflow.yaml
-    - params-serving.yaml
+    - params-minio.yaml
   configure:
     - kubernetes
     - bin/configure-cluster

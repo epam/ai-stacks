@@ -20,10 +20,6 @@ parameters:
   component: kubeflow-pipelines
   value: v1.5.1
 
-- name: ingress.hosts
-  component: istio-ingressgateway
-  value: kubeflow.${dns.domain}
-
 - name: mysql.database
   component: kubeflow-katib
   value: katib
@@ -39,6 +35,28 @@ parameters:
   fromEnv: ML_PIPELINES_BUCKET
   default: mlpipelines
   brief: Name of the bucket used across KFP, Minio and Argo
+
+- name: argo.oidc.clientSecret
+  brief: | 
+    OpenID connect client mutual trust secret between Dex and Argo
+    tip: you can use random values
+  fromEnv: ARGO_OIDC_CLIENT_SECRET
+- name: argo.executor
+  brief: |
+    At the moment k8sapi has been deprecated. It's replacement (emissary) 
+    has not been tested yet 
+    see more info: https://argoproj.github.io/argo-workflows/workflow-executors/
+  default: emissary
+  fromEnv: ARGO_EXECUTOR
+  # value: k8sapi
+
+- name: bucket
+  component: argo
+  parameters:
+  - name: host
+    value: "minio.${minio.namespace}.svc"
+  - name: port
+    value: 9000
 
 - name: bucket
   component: replikate
