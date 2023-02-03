@@ -11,7 +11,7 @@ spec:
   - name: KF_PIPELINES_ENDPOINT
     value: "http://ml-pipeline.${kubeflow.namespace}.svc.cluster.local:8888"
   - name: KF_PIPELINES_UI_ENDPOINT
-    value: "${ingress.protocol}://${ingress.host}/_/pipeline"
+    value: "${ingress.protocol}://${ingress.hosts}/_/pipeline"
   - name: KF_PIPELINES_DEFAULT_EXPERIMENT_NAME
     value: "{{name}}"
   - name: KF_PIPELINES_SA_TOKEN_PATH

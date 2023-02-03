@@ -11,7 +11,7 @@ requires:
 parameters:
 - name: dns.domain
 - name: ingress.protocol
-- name: ingress.host
+- name: ingress.hosts
 - name: bucket.endpoint
   value: ${ingress.protocol}://${bucket.host}:${bucket.port}
 - name: bucket.host
