@@ -1,28 +1,56 @@
 parameters:
-- name: component.kubeflow
+- name: kubeflow
   parameters:
-  - name: name
-    value: kubeflow
   - name: namespace
     value: kubeflow
   - name: version
-    fromEnv: KUBEFLOW_VERSION
-    default: v1.6.1
-  - name: authn.oidcProvider
-    value: ${component.ingress.protocol}://auth.${dns.domain}
+    value: v1.6.1
   - name: authn.oidcRedirectURI
-    value: ${component.ingress.protocol}://${component.ingress.host}/login/oidc
+    value: ${ingress.protocol}://kubeflow.${dns.domain}/login/oidc
   - name: authn.oidcSecret
-    brief: | 
+    brief: |
       OpenID connect client mutual trust secret between Dex and Argo
       tip: you can use random values
     fromEnv: KUBEFLOW_OIDC_CLIENT_SECRET
-  - name: authn.sessionMaxAge
-    value: 86400
   - name: authn.volumeSize
-    value: 10Gi
+    value: 1Gi
+
+  # Kubeflow v1.6.1 points to KFP 2.0alpha while stable 1.8.2 (from v1.5.1)
+- name: kubeflow.version
+  component: kubeflow-pipelines
+  value: v1.5.1
+
+- name: mysql.database
+  component: kubeflow-katib
+  value: katib
+- name: mysql.database
+  component: kubeflow-metadata
+  value: metadb
+- name: mysql.database
+  component: kubeflow-pipelines
+  value: pipelineDb
+
+- name: bucket.insecure
+  component: replikate
+  value: 'false'
+
+- name: argo
+  parameters:
+  - name: oidc.clientSecret
+    brief: | 
+      OpenID connect client mutual trust secret between Dex and Argo
+      tip: you can use random values
+    fromEnv: ARGO_OIDC_CLIENT_SECRET
+  - name: executor
+    brief: |
+      At the moment k8sapi has been deprecated. It's replacement (emissary) 
+      has not been tested yet 
+      see more info: https://argoproj.github.io/argo-workflows/workflow-executors/
+    default: emissary
+    fromEnv: ARGO_EXECUTOR
+    # value: k8sapi
 
 outputs:
 - name: kubeflow.url
   brief: Kubeflow Central Dashboard
-  value: ${component.ingress.protocol}://kubeflow.${dns.domain}
+  value: ${ingress.protocol}://kubeflow.${dns.domain}

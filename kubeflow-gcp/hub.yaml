@@ -8,64 +8,55 @@ requires:
 extensions:
   include:
     - params.yaml
-    - params-dex.yaml
-    - params-istio.yaml
-    - params-nginx.yaml
-    - params-minio.yaml
-    - params-mysql.yaml
-    - params-argo.yaml
+    - params-inference.yaml
+    - params-ingress.yaml
     - params-kubeflow.yaml
-    - params-kubeflow-jupyter.yaml
-    - params-kubeflow-pipelines.yaml
-    - params-kubeflow-tensorboard.yaml
-    - params-kubeflow-katib.yaml
-    - params-kserve.yaml
-    - params-seldon.yaml
-    - params-replikate.yaml
+    - params-db.yaml
   init:
     - gcp
   configure:
     - gcp
-    - bin/configure-gke
-    - bin/gen-oidc-secrets
+    - bin/configure-gke-cluster
+    - bin/configure-gke-addons
+    - bin/configure-oidc
     - kubernetes
     - env
-    # - bin/test-user-permissions
-    - bin/test-required-addons
 
 components:
   - name: external-dns
     source:
       dir: components/external-dns
       git:
-        remote: https://github.com/epam/google-components.git
+        remote: https://github.com/epam/hub-kubeflow-components.git
         subDir: external-dns
     hooks:
-    - file: bin/mount-user-creds
-      triggers: [pre-deploy]
+    - file: bin/externaldns-pre-deploy
+      triggers: [pre-deploy] 
     depends:
     - nginx
 
-  # - name: cert-manager
-  #   source:
-  #     dir: components/cert-manager
-  #     git:
-  #       remote: https://github.com/epam/google-components.git
-  #       subDir: cert-manager
-  #   depends:
-  #   - nginx
-  #   hooks:
-  #   - file: bin/mount-user-creds
-  #     triggers: [post-deploy]
-  #   - file: bin/create-issuer
-  #     triggers: [post-deploy]
+  - name: cert-manager
+    source:
+      dir: components/cert-manager
+      git:
+        remote: https://github.com/epam/hub-kubeflow-components.git
+        subDir: cert-manager
+    depends:
+    - nginx
+    hooks:
+    - file: bin/certmanager-pre-deploy
+      triggers: [pre-deploy]
+    - file: bin/certmanager-post-deploy
+      triggers: [post-deploy]
+    - file: bin/certmanager-post-undeploy
+      triggers: [post-undeploy]
 
   - name: nginx
     source:
       dir: components/nginx
       git:
-        remote: https://github.com/epam/google-components.git
-        subDir: nginx
+        remote: https://github.com/epam/hub-kubeflow-components.git
+        subDir: nginx-ingress
 
   - name: istio-base
     source:
@@ -99,12 +90,15 @@ components:
         remote: https://github.com/epam/kubeflow-components.git
         subDir: dex
 
-  - name: minio
+  - name: gsbucket
     source:
-      dir: components/minio
+      dir: components/gsbucket
       git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: minio
+        remote: https://github.com/epam/google-components.git
+        subDir: gsbucket
+    hooks:
+    - file: bin/gsbucket-pre-deploy
+      triggers: [pre-deploy]   
 
   - name: kserve-etcd
     source:
@@ -113,33 +107,21 @@ components:
         remote: https://github.com/epam/kubeflow-components.git
         subDir: etcd
 
-  - name: mysql-argo
+  - name: argo-db
     source:
-      dir: components/mysql
+      dir: components/postgresql
       git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: mysql
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: postgresql
+        ref: develop
 
-  - name: mysql-pipeline
+  - name: kubeflow-db
     source:
       dir: components/mysql
       git:
-        remote: https://github.com/epam/kubeflow-components.git
+        remote: https://github.com/agilestacks/kubeflow-components.git
         subDir: mysql
-
-  - name: mysql-katib
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: mysql
-
-  - name: mysql-metadata
-    source:
-      dir: components/mysql
-      git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: mysql
+        ref: develop
 
   - name: argo
     source:
@@ -148,8 +130,8 @@ components:
         remote: https://github.com/epam/kubeflow-components.git
         subDir: argo
     depends:
-      - mysql-argo
-      - minio
+      - argo-db
+      - gsbucket
       - dex
 
   - name: kubeflow-common
@@ -236,7 +218,7 @@ components:
         subDir: kubeflow-katib
     depends:
       - kubeflow-common
-      - mysql-katib
+      - kubeflow-db
 
   - name: kubeflow-metadata
     source:
@@ -246,7 +228,7 @@ components:
         subDir: kubeflow-metadata
     depends:
       - kubeflow-common
-      - mysql-metadata
+      - kubeflow-db
 
   - name: kubeflow-pipelines
     source:
@@ -257,36 +239,27 @@ components:
     depends:
       - kubeflow-profiles
       - kubeflow-metadata
-      - mysql-metadata
-      - minio
+      - kubeflow-db
+      - gsbucket
 
-  - name: knative
-    source:
-      dir: components/knative
-      git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: knative
-
-  - name: kserve
-    source:
-      dir: components/kserve
-      git:
-        remote: https://github.com/epam/kubeflow-components.git
-        subDir: kserve
-    depends:
-      - istio-ingressgateway
-      - kubeflow-common
-      - knative
-      - kserve-etcd
-
-  # - name: kubebench
+  # - name: knative
   #   source:
-  #     dir: components/kubebench
+  #     dir: components/knative
   #     git:
   #       remote: https://github.com/epam/kubeflow-components.git
-  #       subDir: kubebench
+  #       subDir: knative
+
+  # - name: kserve
+  #   source:
+  #     dir: components/kserve
+  #     git:
+  #       remote: https://github.com/epam/kubeflow-components.git
+  #       subDir: kserve
   #   depends:
-  #   - istio-ingressgateway
+  #     - istio-ingressgateway
+  #     - kubeflow-common
+  #     - knative
+  #     - kserve-etcd
 
   - name: kubeflow-webhooks
     source:
@@ -294,18 +267,9 @@ components:
       git:
         remote: https://github.com/epam/kubeflow-components.git
         subDir: kubeflow-webhooks
+        ref: develop
     depends:
       - kubeflow-common
-
-  # - name: kubeflow-tf-training
-  #   source:
-  #     dir: components/kubeflow-tf-training
-  #     git:
-  #       remote: https://github.com/epam/kubeflow-components.git
-  #       subDir: kubeflow-tf-training
-  #   depends:
-  #   - kubeflow-rbac
-  #   - kubeflow-common
 
   - name: kubeflow-training-operator
     source:
@@ -332,6 +296,6 @@ components:
         remote: https://github.com/epam/kubeflow-stacks.git
         subDir: apps/replikate/kustomize
     depends:
-      - minio
+      - gsbucket
       - istio-ingressgateway
       - kubeflow-pipelines

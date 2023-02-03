@@ -1,0 +1,26 @@
+#!/bin/sh -ex
+
+if test -z "$HUB_COMPONENT_DIR" -o -z "$KUBEFLOW_SA_NAME" -o -z "$GOOGLE_PROJECT"; then
+  echo "Requried variables not set HUB_COMPONENT_DIR KUBEFLOW_SA_NAME GOOGLE_PROJECT" >&2
+  exit 1
+fi
+
+KUBEFLOW_SA_EMAIL="$KUBEFLOW_SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+if ! gcloud iam service-accounts describe "$KUBEFLOW_SA_EMAIL" >/dev/null 2>&1; then
+  echo "  Creating Google Service Account: $KUBEFLOW_SA_NAME"
+  gcloud iam service-accounts create "$KUBEFLOW_SA_NAME" \
+    --description "Used by hubctl" \
+    --display-name "$KUBEFLOW_SA_NAME"
+fi
+
+ROLE=roles/storage.admin
+if ! gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" \
+    --member "serviceAccount:$KUBEFLOW_SA_EMAIL" \
+    --role "$ROLE"; then
+  echo "Failed to add $KUBEFLOW_SA_EMAIL role $ROLE" >&2
+  cat <<EOF
+You may want to add it manually
+  $ gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" --member "serviceAccount:$KUBEFLOW_SA_EMAIL" --role "$ROLE"
+EOF
+  sleep 2
+fi

@@ -1,6 +1,0 @@
-# parameters:
-# - name: component.kubeflow
-#   component: katib
-#   parameters:
-#   - name: version
-#     value: v1.5.0

@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-
 PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
 export PATH
 

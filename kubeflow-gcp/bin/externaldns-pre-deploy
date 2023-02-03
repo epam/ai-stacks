@@ -1,0 +1,53 @@
+#!/bin/sh -e
+
+if test -z "$HUB_COMPONENT_DIR" -o -z "$KUBEFLOW_SA_NAME" -o -z "$GOOGLE_PROJECT"; then
+  echo "Requried variables not set HUB_COMPONENT HUB_COMPONENT_DIR KUBEFLOW_SA_NAME GOOGLE_PROJECT" >&2
+  exit 1
+fi
+
+KUBEFLOW_SA_EMAIL="$KUBEFLOW_SA_NAME@$GOOGLE_PROJECT.iam.gserviceaccount.com"
+if ! gcloud iam service-accounts describe "$KUBEFLOW_SA_EMAIL" >/dev/null 2>&1; then
+  echo "  Creating Google Service Account: $KUBEFLOW_SA_NAME"
+  gcloud iam service-accounts create "$KUBEFLOW_SA_NAME" \
+    --description "Used by hubctl" \
+    --display-name "$KUBEFLOW_SA_NAME"
+fi
+
+echo "* Using Google Service Account: $KUBEFLOW_SA_EMAIL"
+cat << EOF > "$HUB_COMPONENT_DIR/values-generated.yaml"
+logLevel: debug
+serviceAccount:
+  create: true
+  name: "$HUB_COMPONENT"
+  automountServiceAccountToken: true
+  annotations:
+    iam.gke.io/gcp-service-account: "$KUBEFLOW_SA_EMAIL"
+nodeSelector:
+  iam.gke.io/gke-metadata-server-enabled: "true"
+  kubernetes.io/os: "linux"
+provider: google
+google:
+  project: "$GOOGLE_PROJECT"
+EOF
+
+if ! gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" \
+    --member "serviceAccount:$KUBEFLOW_SA_EMAIL" \
+    --role roles/dns.admin; then
+  cat << EOF
+Failed to add $KUBEFLOW_SA_EMAIL role roles/dns.admin
+You may want to add it manually
+  $ gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" --member "serviceAccount:$KUBEFLOW_SA_EMAIL" --role roles/dns.admin
+EOF
+  sleep 2
+fi
+
+if ! gcloud iam service-accounts add-iam-policy-binding "$KUBEFLOW_SA_EMAIL" \
+    --role roles/iam.workloadIdentityUser \
+    --member "serviceAccount:$GOOGLE_PROJECT.svc.id.goog[$NAMESPACE/$HUB_COMPONENT]"; then
+    
+  echo "Failed to add $KUBEFLOW_SA_EMAIL role roles/iam.workloadIdentityUser" >&2
+  echo "Failed to add $KUBEFLOW_SA_EMAIL member serviceAccount:$GOOGLE_PROJECT.svc.id.goog[$NAMESPACE/$HUB_COMPONENT]" >&2
+  echo "You may want to add it manually"
+  echo $ gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT" --member "serviceAccount:$KUBEFLOW_SA_EMAIL" --role roles/dns.admin
+  sleep 2
+fi

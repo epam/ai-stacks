@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+if test -z "$GOOGLE_PROJECT"; then
+  echo "GOOGLE_PROJECT not set" >&2
+  exit 1
+fi
+
+temp="$(mktemp)"
+trap 'rm -f $temp' EXIT
+
+echo -n "Creating cluster issuer..."
+cat <<EOF > "$temp"
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: acme-devops-delivery
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: antons_kranga@epam.com
+    privateKeySecretRef:
+      name: "acme-devops-delivery"
+    solvers:
+    - dns01:
+        cloudDNS:
+          project: $GOOGLE_PROJECT
+EOF
+
+if ! kubectl get -f "$temp" >/dev/null 2>&1; then
+  kubectl create -f "$temp"
+  echo "Waiting for cluster issuer to be ready"
+  kubectl wait --for=condition=ready --timeout=45s -f "$temp";
+fi

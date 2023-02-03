@@ -1,0 +1,27 @@
+parameters:
+- name: kubeflow.version
+  component: knative
+  brief: |
+    We will divorce knative installation from kubeflow manifests.
+    Therefore this parameter is a subject to change
+  value: v1.5.0
+- name: kserve.version
+  value: v0.10.0
+- name: knative.version
+  value: v1.9.0
+- name: etcd
+  parameters: 
+  - name: namespace
+    value: kubeflow-data
+  - name: endpoint
+    component: kserve
+    value: http://etcd.${etcd.namespace}:2379
+  - name: rootPassword
+    brief: etcd server root password (kserve model-mesh backend)
+    fromEnv: ETCD_ROOT_PASSWORD
+  - name: user
+    component: kserve
+    value: root
+  - name: password
+    component: kserve
+    value: "${etcd.rootPassword}"

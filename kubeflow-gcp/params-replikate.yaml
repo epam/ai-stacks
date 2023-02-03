@@ -1,4 +1,0 @@
-parameters:
-- name: component.replikate.kustomize.base
-  brief: This base adds GCP service account
-  value: hub

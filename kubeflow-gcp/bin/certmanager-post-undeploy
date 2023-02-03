@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+kubectl delete clusterissuer "acme-devops-delivery" --ignore-not-found
+kubectl -n "$NAMESPACE" delete secret "acme-devops-delivery" --ignore-not-found
+
+echo "Done"

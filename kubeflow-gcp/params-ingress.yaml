@@ -1,0 +1,45 @@
+parameters:
+
+- name: ingress
+  parameters:
+  - name: protocol
+    value: https
+  - name: hosts
+    value: kubeflow.${dns.domain}
+  - name: ingress.hosts
+    component: istio-ingressgateway
+    value: kubeflow.${dns.domain}
+  - name: hosts
+    component: dex
+    value: auth.${dns.domain}
+  - name: ingress.hosts
+    component: argo
+    value: argo.${dns.domain}      
+  - name: class
+    brief: |
+      Name of the existing Kubenretes ingress class
+      Note, this command may not show results: `kubectl get ingressclass`
+      because ingress controller may implicitly declare one. 
+      
+      See more: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class
+    default: nginx
+    fromEnv: KUBERNETES_INGRESS_CLASS
+  - name: isDefault
+    component: nginx
+    value: true
+
+- name: nginx.namespace
+  value: kube-ingress
+- name: certManager.namespace
+  value: kube-ingress
+- name: externalDns.namespace
+  value: kube-ingress
+
+- name: istio
+  parameters:
+  - name: namespace
+    value: istio-system
+  - name: version
+    value: 1.15.1
+  - name: ingressGateway
+    value: istio-ingressgateway

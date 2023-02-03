@@ -33,6 +33,23 @@ fi
 
 echo "* Fetching cluster $cluster_name kubeconfig"
 GOOGLE_ZONE="$(gcloud container clusters list --filter="name:$cluster_name" --format json | jq -cMr 'first|.zone | select(.)')"
+
+if ! dotenv contains "USE_GKE_GCLOUD_AUTH_PLUGIN"; then
+  # see: https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
+  dotenv set "USE_GKE_GCLOUD_AUTH_PLUGIN" "True"
+fi
+USE_GKE_GCLOUD_AUTH_PLUGIN="$(dotenv get USE_GKE_GCLOUD_AUTH_PLUGIN)"
+export USE_GKE_GCLOUD_AUTH_PLUGIN
+
+if test "$USE_GKE_GCLOUD_AUTH_PLUGIN" = "True"; then
+  echo "* Using kubectl gke-gcloud-auth-plugin..."
+  if ! which gke-gcloud-auth-plugin >/dev/null; then
+    echo "  Installing gke-gcloud-auth-plugin..."
+    gcloud components install -q gke-gcloud-auth-plugin || \
+      gcloud components reinstall -q gke-gcloud-auth-plugin
+  fi
+fi
+
 if test -n "$GOOGLE_ZONE"; then
   gcloud container clusters get-credentials "$cluster_name" --zone "$GOOGLE_ZONE" | ident || true
   echo "* Using region and zone from cluster: $cluster_name"
@@ -57,32 +74,6 @@ if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
   ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
 fi
 
-echo "* Checking cluster compatibility requirements"
-gce_ingress_enabled="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" --format="json" \
-| jq --arg addon "httpLoadBalancing"   '.addonsConfig[$addon]|select(.)|{enabled: [(.disabled | not), .enabled?, true|select(.!=null)]|first}')"
-if test "$gce_ingress_enabled" = "true"; then
-  cat << EOF | color e
-Error: It looks like incompatible addon httpLoadBalancing has been enabled
-
-This addon is not compatible with ingress of this stack.
-We deploy "nginx" instead. This ingress controller allows
-to more fine grained do customization of ingress hosts
-that has been required by Kubeflow
-
-You can disable this addon by running and then restart this command:
-
-  gcloud container clusters update "$cluster_name" --zone "$GOOGLE_ZONE" --update-addons HttpLoadBalancing=DISABLED
-
-EOF
-  # echo "  Ingress GCE addon has been enabled (httpLoadBalancing)"
-  # ask env "KUBERNETES_INGRESS_CLASS" \
-  #   --suggest "gce" \
-  #   --suggest-tag "gcloud" \
-  #   --priority "parameter hubstate history suggested default empty"
-else
-  echo "  Ingress GCE addon has been disabled (httpLoadBalancing)"
-fi
-
 if ! dotenv contains "USER"; then
   echo "* Getting user account from gcloud"
   user="$(gcloud auth list --verbosity=none --filter=status:ACTIVE --format="json(account)" | jq -cMr --arg u "$USER" '. += [{"account":$u}] | first | .account')"
@@ -98,6 +89,16 @@ if ! dotenv contains "USER"; then
       --suggest "$(whoami)" \
       --priority "parameter hubstate history suggested default empty"
   fi
+fi
+
+admin="$(dotenv get "USER")"
+echo -n "* Check admin access for $admin... "
+if ! kubectl get clusterrolebinding "cluster-admin-binding" > /dev/null 2>&1; then
+  kubectl create clusterrolebinding "cluster-admin-binding" \
+    --clusterrole="cluster-admin" \
+    --user="$admin"
+else
+  color green "ok"
 fi
 
 if ! dotenv contains "GOOGLE_GKE_CLUSTER_SA"; then

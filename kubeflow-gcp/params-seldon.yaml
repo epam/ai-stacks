@@ -1,9 +1,0 @@
-parameters:
-- name: component.ingress.host
-  component: seldon-core-operator
-- name: component.seldon
-  parameters:
-  - name: namespace
-    value: seldon-system
-  - name: version
-    value: v1.13.1
