@@ -13,7 +13,7 @@ parameters:
   fromEnv: ARGO_EXECUTOR
   # value: k8sapi
 
-- name: ingress.host
+- name: ingress.hosts
   component: argo
   value: "argo.${dns.domain}"
 # TODO: we may replace in the future hard dependency on minio 

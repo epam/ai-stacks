@@ -17,3 +17,7 @@ parameters:
 - name: dex.passwordDb.password
   brief: Kubeflow admin user password
   fromEnv: DEX_PASSWORD
+
+- name: ingress.hosts
+  component: replikate
+  value: kubeflow.${dns.domain}

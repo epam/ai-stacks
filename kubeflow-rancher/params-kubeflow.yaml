@@ -20,7 +20,7 @@ parameters:
   component: kubeflow-pipelines
   value: v1.5.1
 
-- name: ingress.host
+- name: ingress.hosts
   component: istio-ingressgateway
   value: kubeflow.${dns.domain}
 
@@ -34,32 +34,19 @@ parameters:
   component: kubeflow-pipelines
   value: pipelineDb
 
-- name: bucket
+- name: bucket.name
   component: kubeflow-pipelines
-  parameters:
-  - name: host
-    value: minio.${minio.namespace}.svc.cluster.local
-  - name: port
-    value: 9000
-  - name: endpoint
-    value: http://minio.${minio.namespace}.svc.cluster.local:9000
-  - name: name
-    fromEnv: ML_PIPELINES_BUCKET
-    default: mlpipelines
-    brief: Name of the bucket used across KFP, Minio and Argo
+  fromEnv: ML_PIPELINES_BUCKET
+  default: mlpipelines
+  brief: Name of the bucket used across KFP, Minio and Argo
 
 - name: bucket
   component: replikate
   parameters:
-  - name: host
-    value: minio.${minio.namespace}.svc.cluster.local
-  - name: port
-    value: 9000
-  - name: endpoint
-    value: http://minio.${minio.namespace}.svc.cluster.local:9000
   - name: name
     fromEnv: ML_PIPELINES_BUCKET
     default: mlpipelines
+    brief: Name of the bucket used across KFP, Minio and Argo
   - name: insecure
     value: 'true'
 

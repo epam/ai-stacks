@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
+export PATH
+
+echo "Setting OpenID connect application secrets"
+ask --non-interactive env "ARGO_OIDC_CLIENT_SECRET" +random -empty
+ask --non-interactive env "KUBEFLOW_OIDC_CLIENT_SECRET" +random -empty

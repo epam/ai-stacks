@@ -9,7 +9,7 @@ parameters:
       fromEnv: ARTIFACTS_BUCKET_ACCESS_KEY
     - name: secretKey
       brief: |
-        Secret aeccess key id for minio artifact storage
+        Secret access key id for minio artifact storage
 
         This parameter will be used across Minio, Argo and KFP
       fromEnv: ARTIFACTS_BUCKET_SECRET_KEY
@@ -21,10 +21,6 @@ parameters:
 
 - name: minio
   parameters:
-  - name: accessKey
-    value: ${bucket.accessKey}
-  - name: secretKey
-    value: ${bucket.secretKey}
   - name: namespace
     value: kubeflow-data
   - name: storageSize
@@ -39,7 +35,7 @@ parameters:
       For possible number of replicas see: https://docs.min.io/docs/minio-erasure-code-quickstart-guide
     value: 1
 
-- name: ingress.host
+- name: ingress.hosts
   component: minio
   value: minio.${dns.domain}
 

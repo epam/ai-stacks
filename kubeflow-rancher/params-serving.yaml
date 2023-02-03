@@ -1,0 +1,7 @@
+parameters:
+- name: etcd.namespace
+  value: kubeflow-data
+- name: etcd.rootPassword
+  fromEnv: ETCD_ROOT_PASSWORD
+  brief: |
+    Password for the root user of the etcd database

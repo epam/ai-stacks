@@ -64,6 +64,14 @@ components:
         subDir: mysql
         ref: develop
 
+  - name: etcd
+    source:
+      dir: components/etcd
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: etcd
+        ref: develop        
+
   - name: argo
     source:
       dir: components/argo
@@ -211,6 +219,7 @@ components:
     depends:
       - minio
       - argo
+      - istio-ingressgateway
 
 extensions:
   include:
@@ -219,10 +228,11 @@ extensions:
     - params-argo.yaml
     - params-mysql.yaml
     - params-kubeflow.yaml
+    - params-serving.yaml
   configure:
     - kubernetes
     - bin/configure-cluster
-    - bin/gen-oidc-secrets
+    - bin/configure-oidc
     - env
   deploy:
     before:
