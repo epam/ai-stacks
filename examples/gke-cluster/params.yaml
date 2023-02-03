@@ -23,11 +23,11 @@ parameters:
       brief: GKE cluster worker nodes machine type
       fromEnv: GKE_CLUSTER_MACHINE_TYPE
     - name: version
-      default: 1.21
+      default: 1.25
       brief: Version of Kubernetes API
       fromEnv: GKE_KUBERNETES_VERSION
     - name: imageType
-      default: ubuntu
+      default: cos_containerd
       brief: |
         Select GKE image type
         See more: https://cloud.google.com/kubernetes-engine/docs/concepts/node-images#available_node_images
@@ -57,7 +57,7 @@ parameters:
       fromEnv: GKE_NODE_POOL_COUNT
       brief: GKE worker node pool size
     - name: machineType
-      value: n1-standard-2
+      value: n1-standard-8
       fromEnv: GKE_NODE_POOL_MACHINE_TYPE
       brief: GKE worker node machine size
     - name: imageType

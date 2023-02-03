@@ -30,12 +30,12 @@ extensions:
 requires:
 - gcp
 
-parameters:
-- name: cloud.gcp.roles
-  value: >-
-    roles/dns.admin
-    roles/iam.serviceAccountCreator
-    roles/iam.serviceAccountDeleter
+# parameters:
+# - name: cloud.gcp.roles
+#   value: >-
+#     roles/dns.admin
+#     roles/iam.serviceAccountCreator
+#     roles/iam.serviceAccountDeleter
 
 lifecycle:
   verbs:

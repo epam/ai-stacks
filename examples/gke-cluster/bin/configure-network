@@ -17,8 +17,9 @@ fi
 
 NETWORK="$(params value component.gke.network)"
 SUBNET_MODE="$(gcloud compute networks list --filter="name=($NETWORK)" --format json | jq -r 'first | .x_gcloud_subnet_mode | select(.)')"
-
-if test "$SUBNET_MODE" = "CUSTOM"; then
+echo "  Using network $NETWORK with subnet mode: $SUBNET_MODE"
+# We still asking user to enter subnet for AUTO mode
+# if test "$SUBNET_MODE" = "CUSTOM"; then
   echo "* Setting subnet for network $NETWORK due to: $SUBNET_MODE mode"
   if dotenv contains "GKE_SUBNET"; then
     echo "  GKE_SUBNET is already set"
@@ -27,4 +28,4 @@ if test "$SUBNET_MODE" = "CUSTOM"; then
     gcloud compute networks subnets list --network "$NETWORK" --regions "$GOOGLE_REGION" | ident | color g
     ask env "GKE_SUBNET" -random --suggest "$SUBNET" -t "gcloud"
   fi
-fi
+# fi
