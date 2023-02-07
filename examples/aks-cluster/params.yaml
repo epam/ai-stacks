@@ -1,0 +1,41 @@
+parameters:
+- name: dns.name
+  fromEnv: HUB_STACK_NAME
+
+- name: azure
+  parameters:
+  - name: subscriptionId
+    fromEnv: AZURE_SUBSCRIPTION_ID
+  - name: resourceGroup
+    value: epmp-agst
+
+- name: terraform
+  parameters:
+  - name: stateContainer
+    fromEnv: HUB_STATE_CONTAINER
+  - name: resourceGroupName
+    value: ${azure.resourceGroup} 
+
+- name: aks
+  parameters:
+  - name: name
+    value: ${dns.name}-aks
+  - name: location
+    fromEnv: HUB_STATE_REGION
+  - name: resourceGroupName
+    value: ${azure.resourceGroup}
+
+- name: aksNodePool
+  parameters:
+  - name: clusterName
+    value: ${aks.name}
+  - name: poolName
+    value: default1
+  - name: resourceGroupName
+    value: ${azure.resourceGroup}
+  - name: vmSize
+    fromEnv: NODE_POOL_VM_SIZE
+    default: Standard_D2_v2
+  - name: nodeCount
+    fromEnv: NODE_POOL_VM_COUNT
+    default: 2

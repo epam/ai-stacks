@@ -1,0 +1,37 @@
+version: 1
+kind: stack
+meta:
+  name: Azure AKS Cluster Stack
+  brief: Azure AKS Cluster Stack
+
+components:
+- name: aks
+  source:
+    dir: components/aks
+    git:
+      remote: https://github.com/epam/hub-azure-components.git
+      subDir: aks
+- name: aks-node-pool
+  source:
+    dir: components/aks-node-pool
+    git:
+      remote: https://github.com/epam/hub-azure-components.git
+      subDir: aks-node-pool
+          
+requires:
+- azure
+
+extensions:
+  include:
+  - params.yaml
+  configure:
+  - azure  
+  - env
+
+lifecycle:
+  verbs:
+  - deploy
+  - undeploy
+  order:
+  - aks
+  - aks-node-pool
