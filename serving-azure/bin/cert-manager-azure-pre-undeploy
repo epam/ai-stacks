@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+if test "$(kubectl -n "$NAMESPACE" get secret azuredns-config)"; then
+  kubectl -n "$NAMESPACE" delete secret azuredns-config
+fi
+
+if test "$(kubectl get clusterissuer "$CLUSTER_ISSUER")"; then
+  kubectl delete clusterissuer "$CLUSTER_ISSUER"
+fi
+

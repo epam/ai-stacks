@@ -1,0 +1,103 @@
+#!/bin/bash -e
+
+ident() {
+  sed 's/^/  /'
+}
+
+PATH="$(which hub-state)/bin:$HOME/.hub/bin:$PATH"
+export PATH
+
+if ! dotenv contains "HUB_KUBECONFIG"; then
+  domain="$(dotenv get "HUB_DOMAIN_NAME")"
+  dotenv set "HUB_KUBECONFIG" "$(files abspath ".hub/env/$domain.kubeconfig")"
+fi
+
+echo "Configuring AKS cluster"
+# shellcheck disable=SC2155
+export KUBECONFIG="$(dotenv get "HUB_KUBECONFIG" --default "$KUBECONFIG")"
+cluster_name="$(dotenv get "AZURE_AKS_CLUSTER")"
+if test "$(az aks list --resource-group "$AZURE_RESOURCE_GROUP_NAME" --query "[?name == '$cluster_name'] | [?provisioningState == 'Succeeded']" | jq length)" = "1"; then
+  echo "Using AKS cluster: $cluster_name"
+else
+  cluster_name=""
+fi
+
+if test -z "$cluster_name"; then
+  echo "* List of AKS clusters"
+  az aks list --resource-group "$AZURE_RESOURCE_GROUP_NAME" --query "[?provisioningState == 'Succeeded'].{Name:name, \"Resource Group\":resourceGroup, Version:kubernetesVersion}" -o table | color g
+  suggest=$(az aks list --resource-group "$AZURE_RESOURCE_GROUP_NAME" --query "[?provisioningState == 'Succeeded']" | jq '.[0].name // ""' | xargs)
+  ask env "AZURE_AKS_CLUSTER" --message 'AKS cluster name (for possible values see above)' \
+    --suggest "$suggest" --suggest-tag "latest" -random -empty
+  cluster_name="$(dotenv get "AZURE_AKS_CLUSTER")"
+fi
+
+AZURE_LOCATION=$(az aks list --resource-group "$AZURE_RESOURCE_GROUP_NAME" --query "[?name == '$cluster_name'] | [?provisioningState == 'Succeeded']" | jq '.[0].location' | xargs)
+dotenv set "AZURE_LOCATION" "$AZURE_LOCATION"
+
+TENANT_ID=$(az account show --query tenantId -o tsv)
+dotenv set "TENANT_ID" "$TENANT_ID"
+
+az aks get-credentials --resource-group "$AZURE_RESOURCE_GROUP_NAME" --name "$cluster_name"
+
+
+# Todo: Port everything below to Azure
+
+# if ! dotenv contains "KUBERNETES_STORAGE_CLASS"; then
+#   echo "* Configuring storage class for kubernetes"
+#   kubectl get sc | ident |  color g
+#   echo
+#   is_defult="storageclass.kubernetes.io/is-default-class"
+#   sc=$(kubectl get storageclass -o json \
+#       |     jq -cMr --arg "is_default" "$is_defult" '.items[].metadata | select(.annotations[$is_default]=="true").name | select(.)')
+
+#   ask env "KUBERNETES_STORAGE_CLASS" --message 'storage class name (for possible values see above)' --suggest "${sc:-gp2}"
+# fi
+
+# echo "* Checking cluster compatibility requirements"
+# gce_ingress_enabled="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" --format="json" \
+# | jq --arg addon "httpLoadBalancing"   '.addonsConfig[$addon]|select(.)|{enabled: [(.disabled | not), .enabled?, true|select(.!=null)]|first}')"
+# if test "$gce_ingress_enabled" = "true"; then
+#   cat << EOF | color e
+# Error: It looks like incompatible addon httpLoadBalancing has been enabled
+# This addon is not compatible with ingress of this stack.
+# We deploy "nginx" instead. This ingress controller allows
+# to more fine grained do customization of ingress hosts
+# that has been required by Kubeflow
+# You can disable this addon by running and then restart this command:
+#   gcloud container clusters update "$cluster_name" --zone "$GOOGLE_ZONE" --update-addons HttpLoadBalancing=DISABLED
+# EOF
+#   # echo "  Ingress GCE addon has been enabled (httpLoadBalancing)"
+#   # ask env "KUBERNETES_INGRESS_CLASS" \
+#   #   --suggest "gce" \
+#   #   --suggest-tag "gcloud" \
+#   #   --priority "parameter hubstate history suggested default empty"
+# else
+#   echo "  Ingress GCE addon has been disabled (httpLoadBalancing)"
+# fi
+
+# if ! dotenv contains "USER"; then
+#   echo "* Getting user account from gcloud"
+#   user="$(gcloud auth list --verbosity=none --filter=status:ACTIVE --format="json(account)" | jq -cMr --arg u "$USER" '. += [{"account":$u}] | first | .account')"
+#   if test -n "$user"; then
+#     ask env "USER" \
+#       --message 'Kubeflow admin username' \
+#       --suggest "$user" \
+#       --suggest-tag "gcloud" \
+#       --priority "parameter hubstate history suggested default empty"
+#   else
+#     ask env "USER" \
+#       --message 'Kubeflow admin username' \
+#       --suggest "$(whoami)" \
+#       --priority "parameter hubstate history suggested default empty"
+#   fi
+# fi
+
+# if ! dotenv contains "GOOGLE_GKE_CLUSTER_SA"; then
+#   GKE_SA="$(gcloud container clusters describe "$cluster_name" --zone "$GOOGLE_ZONE" | yq e '.nodeConfig.serviceAccount')"
+#   if test "$GKE_SA" = "default"; then
+#     GCP_NUM="$(gcloud projects describe "$GOOGLE_PROJECT" | yq e '.projectNumber')"
+#     GKE_SA="$GCP_NUM-compute@developer.gserviceaccount.com"
+#   fi
+#   echo "* Retrieved cluster service account: $GKE_SA"
+#   dotenv set "GOOGLE_GKE_CLUSTER_SA" "$GKE_SA"
+# fi

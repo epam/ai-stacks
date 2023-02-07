@@ -1,8 +1,5 @@
 version: 1
 kind: stack
-meta:
-  name: Azure AKS Cluster Stack
-  brief: Azure AKS Cluster Stack
 
 components:
 - name: aks
@@ -27,11 +24,3 @@ extensions:
   configure:
   - azure  
   - env
-
-lifecycle:
-  verbs:
-  - deploy
-  - undeploy
-  order:
-  - aks
-  - aks-node-pool

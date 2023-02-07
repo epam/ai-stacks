@@ -1,0 +1,19 @@
+parameters:
+- name: dns.name
+  fromEnv: HUB_STACK_NAME
+- name: dns.domain
+  fromEnv: HUB_DOMAIN_NAME
+
+- name: azure
+  parameters:
+  - name: resourceGroup
+    value: epmp-agst
+  - name: subscriptionId
+    fromEnv: AZURE_SUBSCRIPTION_ID
+
+- name: certmanager
+  parameters:
+  - name: version
+    value: "v1.11.0"
+  - name: namespace
+    value: cert-manager

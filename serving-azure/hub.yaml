@@ -1,0 +1,32 @@
+version: 1
+kind: stack
+
+components:
+- name: cert-manager
+  source:
+    dir: components/cert-manager
+    git:
+      remote: https://github.com/epam/hub-kubeflow-components.git
+      subDir: cert-manager
+      ref: develop
+- name: kserve
+  source:
+    dir: components/kserve-light
+    git:
+      remote: https://github.com/epam/hub-kubeflow-components.git
+      subDir: kserve-light
+      ref: develop  
+
+requires:
+  - azure
+  - kubernetes
+
+extensions:
+  include:
+  - params.yaml
+  configure:
+  - azure
+  - bin/configure-aks
+  - kubernetes 
+  - env
+ 
