@@ -11,10 +11,10 @@ components:
       ref: develop
 - name: kserve
   source:
-    dir: components/kserve-light
+    dir: components/kserve
     git:
       remote: https://github.com/epam/hub-kubeflow-components.git
-      subDir: kserve-light
+      subDir: kserve
       ref: develop  
 
 requires:
