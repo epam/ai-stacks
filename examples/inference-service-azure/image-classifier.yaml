@@ -4,6 +4,10 @@ metadata:
   name: "image-classifier"
 spec:
   predictor:
+    minReplicas: 0
+    maxReplicas: 10
+    scaleTarget: 1
+    scaleMetric: rps
     model:
       modelFormat:
         name: pytorch
