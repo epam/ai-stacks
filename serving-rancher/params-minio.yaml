@@ -1,0 +1,36 @@
+parameters:
+- name: bucket
+  parameters:
+    - name: accessKey
+      brief: Access key id for minio artifact storage
+      fromEnv: ARTIFACTS_BUCKET_ACCESS_KEY
+    - name: secretKey
+      brief: Secret access key id for minio artifact storage
+      fromEnv: ARTIFACTS_BUCKET_SECRET_KEY
+    - name: name
+      default: artifacts
+      fromEnv: ARTIFACTS_BUCKET_NAME
+      brief: Name of the bucket used across KFP, Minio and Argo
+
+- name: minio
+  parameters:
+  - name: storageSize
+    value: 2Gi
+  - name: mode
+    brief: |
+      Possible values: standalone or distributed
+      For distributed mode see: https://docs.minio.io/docs/distributed-minio-quickstart-guide
+    value: standalone
+  - name: replicas
+    brief: |
+      For possible number of replicas see: https://docs.min.io/docs/minio-erasure-code-quickstart-guide
+    value: 1
+
+- name: ingress.hosts
+  component: minio
+  value: minio.${dns.domain}
+
+outputs:
+- name: minio.url
+  brief: Minio Web Console
+  value: ${ingress.protocol}://minio.${dns.domain}

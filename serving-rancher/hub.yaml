@@ -1,0 +1,97 @@
+version: 1
+kind: stack
+
+requires:
+  - kubernetes
+
+components:
+  - name: cert-manager
+    source:
+      dir: components/cert-manager
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: cert-manager
+        ref: develop
+
+  - name: istio-base
+    source:
+      dir: components/istio-base
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: istio-base
+        ref: develop
+
+  - name: istio-discovery
+    source:
+      dir: components/istio-discovery
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: istio-discovery
+        ref: develop
+    depends:
+      - istio-base
+      - cert-manager
+
+  - name: knative-ingressgateway
+    source:
+      dir: components/istio-ingressgateway
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: istio-ingressgateway
+    depends:
+      - istio-discovery
+
+  - name: minio
+    source:
+      dir: components/minio
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: minio
+        ref: develop
+
+  - name: knative-serving
+    source:
+      dir: components/knative-serving
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: knative-serving
+        ref: develop
+    depends:
+    - cert-manager
+    - knative-ingressgateway
+
+  - name: knative-eventing
+    source:
+      dir: components/knative-eventing
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: knative-eventing
+        ref: develop       
+    depends:
+    - knative-serving
+
+  - name: kserve
+    source:
+      dir: components/kserve
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: knative-eventing
+        ref: develop       
+    depends:
+    - cert-manager
+    - istio-discovery
+    - knative-serving
+    - minio
+
+extensions:
+  include:
+    - params.yaml
+    - params-minio.yaml
+  configure:
+    - kubernetes
+    - bin/configure-cluster
+    - env
+  deploy:
+    before:
+      - kubernetes
+      - bin/check-cluster

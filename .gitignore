@@ -7,3 +7,4 @@ components/
 components
 kubeflow-rancher/.vscode
 kubeflow-rancher/.hypothesis
+serving-rancher/etc

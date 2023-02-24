@@ -1,0 +1,52 @@
+parameters:
+- name: kubernetes.context
+  value: rancher-desktop
+- name: dns.domain
+  value: localhost
+- name: storage.class
+  brief: |
+    Name of the existing Kubernetes storage class.
+    This class will be used to provision PVs for Kubeflow such and notebooks and databases
+
+    To check for available storage classes run: `kubectl get sc`
+  fromEnv: STORAGE_CLASS
+
+- name: ingress
+  parameters:
+  - name: class
+    fromEnv: INGRESS_CLASS
+  - name: protocol
+    value: http
+  - name: hosts
+    value: inference.${dns.domain}
+  - name: hosts
+    value: >-
+      inference.${dns.domain}
+    component: knative-serving
+  - name: hosts
+    brief: |
+      Wildcard hosts works with Traefik
+    value: >-
+      *.inference.${dns.domain}
+    component: knative-ingressgateway
+
+- name: istio
+  parameters:
+  - name: namespace
+    value: istio-system
+  - name: version
+    value: 1.15.1
+
+- name: knative
+  parameters:
+  - name: serving.istio
+    brief: Keep enabled for kserve Serverless mode
+    value: enabled
+  - name: serving.hpa
+    value: disabled
+
+- name: kserve.deploymentMode
+  brief: |
+    KServe mode: Serverless or RawDeployment
+    See more: 
+  value: Serverless

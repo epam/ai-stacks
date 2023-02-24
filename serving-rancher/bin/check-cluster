@@ -1,0 +1,64 @@
+#!/bin/bash -e
+
+hubctl="$(which hubctl 2>/dev/null || true)"
+if test -z "$hubctl"; then
+  # backward compatibility
+  color warn "CLI name 'hub' is deprecated. It will be renamed to 'hubctl' in future releases"
+  hubctl="$(which hub 2>/dev/null || true)"
+fi
+if test -z "$hubctl"; then
+  color error "hubctl not found in PATH. Please install hubctl first."
+  exit 1
+fi
+
+beginswith() {
+  case $2 in "$1"*) true;; *) false;; esac;
+}
+
+in_directory() {
+  file="$(files abspath "$1")"
+  dir="$(files abspath "$2")"
+  beginswith "$dir" "$file"
+}
+
+if ! dotenv contains HUB_KUBECONFIG; then
+  color warning "HUB_KUBECONFIG is not set"
+  $hubctl stack configure -r "kubernetes"
+fi
+
+hub_kubeconfig="$(dotenv get HUB_KUBECONFIG)"
+if ! test -f "$hub_kubeconfig"; then
+  color warn "Cannot find kubeconfig: $hub_kubeconfig"
+  $hubctl stack configure -r "kubernetes"
+fi
+
+test_connection() {
+  (
+    KUBECONFIG="$1" kubectl version >/dev/null 2>&1
+  )
+}
+
+echo -n "* Using kubeconfig: $hub_kubeconfig"
+echo -n "* Checking cluster connectivity: "
+if ! test_connection "$hub_kubeconfig"; then
+  color error "error"
+  color warn "* Reloading kubeconfig: $hub_kubeconfig"
+  if ! in_directory "$hub_kubeconfig" "$HUB_WORKDIR/.hub"; then
+    color error "Cannot delete $hub_kubeconfig"
+    color error "File is not in directory $HUB_WORKDIR/.hub"
+    exit 1
+  fi
+  echo "  Removing: $hub_kubeconfig"
+  rm -f "$hub_kubeconfig"
+  dotenv set "HUB_KUBECONFIG" ""
+  $hubctl stack configure -r "kubernetes"
+  echo -n "* Rechecking cluster connectivity: "
+  if test_connection "$hub_kubeconfig"; then
+    color green "ok"
+  else 
+    color error "error"
+    exit 1
+  fi
+else
+  color green "ok"
+fi

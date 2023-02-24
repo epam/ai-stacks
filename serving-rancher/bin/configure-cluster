@@ -1,0 +1,65 @@
+#!/bin/bash -e
+
+KUBECONFIG="$(dotenv get HUB_KUBECONFIG --default "$KUBECONFIG")"
+export KUBECONFIG
+
+verified="1.24 1.25"
+
+echo -n "* Checking Kubernetes API version: "
+api_version="$(kubectl version -o json | jq -r '.serverVersion | .major+"."+.minor')"
+
+ident() {
+  sed 's/^/  /'
+}
+
+contains() {
+  local a
+  a="$1"
+  shift 
+  case $* in 
+  *$a*) true;; 
+  *) false;; 
+  esac
+}
+# shellcheck disable=SC2086
+if contains "$api_version" $verified; then
+    echo -n "$api_version" 
+    color green " ok"
+else
+    color error "$api_version (unsupported)"
+    cat << EOF | color warn
+
+Warning: we have not yet tested this verison of Kubernets
+See more about prerequisites here: [TODO: link to the doc]
+
+Verified versions: $verified
+
+EOF
+fi
+
+if ! dotenv contains STORAGE_CLASS; then
+  echo "* Setting kubernetes storage class"
+  kubectl get storageclass -o wide | ident | color green
+  default_sc="$(kubectl get storageclass  -o jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class)].metadata.name}')"
+  if [ -n "$default_sc" ]; then
+    ask env "STORAGE_CLASS" -random -empty --suggest "$default_sc"
+  else
+    color warning "No default storage class found"
+    ask env "STORAGE_CLASS" -random -empty
+  fi
+else
+  echo -n "* Using storage class: "
+  dotenv get STORAGE_CLASS | color highlight
+fi
+
+if ! dotenv contains INGRESS_CLASS; then
+  echo "* Setting ingress class"
+  kubectl get ingressclass -o wide | ident | color green
+  default_ic="$(kubectl get ingressclass -o json | jq -r '.items|first|select(.).metadata.name')"
+  if [ -n "$default_ic" ]; then
+    ask env "INGRESS_CLASS" -random -empty --suggest "$default_ic"
+  else
+    color warning "No default storage class found"
+    ask env "INGRESS_CLASS" -random +empty
+  fi
+fi
