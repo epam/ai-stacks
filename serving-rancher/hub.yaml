@@ -32,7 +32,15 @@ components:
       - istio-base
       - cert-manager
 
-  - name: knative-ingressgateway
+  - name: kserve-ingressgateway
+    source:
+      dir: components/istio-ingressgateway
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: istio-ingressgateway
+    depends:
+      - istio-discovery
+  - name: kserve-localgateway
     source:
       dir: components/istio-ingressgateway
       git:
@@ -58,7 +66,8 @@ components:
         ref: develop
     depends:
     - cert-manager
-    - knative-ingressgateway
+    - kserve-localgateway
+    - kserve-ingressgateway
 
   - name: knative-eventing
     source:
@@ -82,6 +91,18 @@ components:
     - istio-discovery
     - knative-serving
     - minio
+
+  - name: kserve-model-ui
+    source:
+      dir: components/kserve-model-ui
+      git:
+        remote: https://github.com/agilestacks/kubeflow-components.git
+        subDir: kserve-model-ui
+        ref: develop       
+    depends:
+    - kserve-ingressgateway
+    - knative-serving
+    - kserve
 
 extensions:
   include:

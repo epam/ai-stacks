@@ -22,13 +22,25 @@ parameters:
   - name: hosts
     value: >-
       inference.${dns.domain}
+      svc.cluster.local
     component: knative-serving
   - name: hosts
+    component: kserve-model-ui
+    value: models.${dns.domain}
+  - name: paths
+    component: kserve-model-ui
+    value: /
+  - name: hosts
+    component: kserve-ingressgateway
     brief: |
       Wildcard hosts works with Traefik
     value: >-
+      models.${dns.domain}
+      inference.${dns.domain}
       *.inference.${dns.domain}
-    component: knative-ingressgateway
+  - name: hosts
+    component: kserve-localgateway
+    value: ""
 
 - name: istio
   parameters:
@@ -44,9 +56,24 @@ parameters:
     value: enabled
   - name: serving.hpa
     value: disabled
+- name: istio
+  component: knative-serving
+  parameters:
+  - name: ingressGateway
+    value: kserve-ingressgateway
+  - name: localGateway
+    value: kserve-localgateway
 
 - name: kserve.deploymentMode
   brief: |
     KServe mode: Serverless or RawDeployment
     See more: 
   value: Serverless
+
+outputs:
+- name: models.url
+  brief: KServe Models UI
+  value: ${ingress.protocol}://models.${dns.domain}
+- name: kserve.url
+  brief: KServe Ingress
+  value: ${ingress.protocol}://inference.${dns.domain}
