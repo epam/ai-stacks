@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+# shellcheck disable=SC2230,SC2154
+cat << EOF > "../${HUB_COMPONENT_DIR}/values-generated.yaml"
+controller:
+  service:
+    loadBalancerSourceRanges: 
+    - "${WHITELISTED_CIDR}"
+EOF

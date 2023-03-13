@@ -8,13 +8,52 @@ components:
     git:
       remote: https://github.com/epam/hub-azure-components.git
       subDir: aks
-- name: aks-node-pool
+  hooks:
+  - file: bin/set-kubeconfig
+    triggers: [post-deploy]
+
+- name: cert-manager
   source:
-    dir: components/aks-node-pool
+    dir: components/cert-manager
     git:
-      remote: https://github.com/epam/hub-azure-components.git
-      subDir: aks-node-pool
-          
+      remote: https://github.com/epam/kubeflow-components.git
+      subDir: cert-manager
+      ref: develop
+  hooks:
+  - file: bin/cert-manager-azure-post-deploy
+    triggers: [post-deploy]
+  - file: bin/cert-manager-azure-pre-undeploy
+    triggers: [pre-undeploy]                         
+  depends:
+    - aks
+
+- name: external-dns
+  source:
+    dir: components/external-dns
+    git:
+      remote: https://github.com/epam/kubeflow-components.git
+      subDir: external-dns
+      ref: develop
+  hooks:
+  - file: bin/external-dns-azure-pre-deploy
+    triggers: [pre-deploy]             
+  depends:
+    - aks
+
+- name: nginx
+  source:
+    dir: components/nginx-ingress
+    git:
+      remote: https://github.com/epam/kubeflow-components.git
+      subDir: nginx-ingress
+      ref: develop
+  hooks: 
+  - file: bin/nginx-azure-pre-deploy
+    triggers: [pre-deploy]             
+  depends:
+    - aks         
+
+
 requires:
 - azure
 

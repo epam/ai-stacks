@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+# shellcheck disable=SC2230,SC2154
+TENANT_ID=$(az account show --query tenantId -o tsv)
+
+cat << EOF > "../${HUB_COMPONENT_DIR}/values-generated.yaml"
+provider: azure
+azure:
+  resourceGroup: "${AZURE_RESOURCE_GROUP_NAME}"
+  subscriptionId: "${AZURE_SUBSCRIPTION_ID}"
+  tenantId: "${TENANT_ID}"
+  aadClientId: "${DNS_CONTRIBUTOR_SP_CLIENT_ID}"
+  aadClientSecret: "${DNS_CONTRIBUTOR_SP_SECRET}"
+EOF

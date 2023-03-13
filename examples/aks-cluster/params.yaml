@@ -1,41 +1,57 @@
 parameters:
 - name: dns.name
   fromEnv: HUB_STACK_NAME
+- name: dns.domain
+  fromEnv: HUB_DOMAIN_NAME  
 
 - name: azure
   parameters:
-  - name: subscriptionId
-    fromEnv: AZURE_SUBSCRIPTION_ID
-  - name: resourceGroup
-    value: epmp-agst
-
-- name: terraform
-  parameters:
-  - name: stateContainer
-    fromEnv: HUB_STATE_CONTAINER
-  - name: resourceGroupName
-    value: ${azure.resourceGroup} 
-
-- name: aks
-  parameters:
-  - name: name
-    value: ${dns.name}-aks
   - name: location
-    fromEnv: HUB_STATE_REGION
+    fromEnv: AZURE_REGION
   - name: resourceGroupName
-    value: ${azure.resourceGroup}
+    fromEnv: AZURE_RESOURCE_GROUP_NAME
+  - name: clientId
+    brief: |
+      Client ID of Azure Service Principal with DNS Contributor role
+      How to create Service Principals: 
+      https://learn.microsoft.com/en-us/azure/purview/create-service-principal-azure
+    fromEnv: DNS_CONTRIBUTOR_SP_CLIENT_ID
+  - name: clientSecret
+    brief: |
+      Client Secret of the Azure Service Principal with DNS Contributor role
+      How add a Client Secret to the Service Principal
+      https://learn.microsoft.com/en-us/azure/purview/create-service-principal-azure#adding-a-secret-to-the-client-credentials
+    fromEnv: DNS_CONTRIBUTOR_SP_SECRET
 
-- name: aksNodePool
+- name: kubernetes
+  component: aks
   parameters:
-  - name: clusterName
-    value: ${aks.name}
-  - name: poolName
-    value: default1
-  - name: resourceGroupName
-    value: ${azure.resourceGroup}
-  - name: vmSize
-    fromEnv: NODE_POOL_VM_SIZE
-    default: Standard_D2_v2
-  - name: nodeCount
-    fromEnv: NODE_POOL_VM_COUNT
+  - name: cluster.name
+    fromEnv: KUBERNETES_NAME
+    brief: |
+      AKS Cluster name
+    default: superhub
+  - name: cluster.version
+    brief: |
+      Kubernetes version
+      Please check https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions?tabs=azure-cli
+      which versions are supported
+    value: "1.25"
+  - name: node.machineType
+    brief: |
+      Size of Kubernetes node
+      See https://learn.microsoft.com/en-us/azure/virtual-machines/sizes what
+      sizes are available
+    default: "Standard_B2s"
+    fromEnv: KUBERNETES_MACHINE_TYPE
+  - name: node.count
     default: 2
+    fromEnv: KUBERNETES_NODE_COUNT
+
+- name: nginx
+  parameters:
+  - name: loadBalancerSourceRanges
+    brief: IP range from where public Nginx LoadBalancer should be accessible 
+    default: "0.0.0.0/0"
+    fromEnv: WHITELISTED_CIDR
+
