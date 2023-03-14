@@ -9,7 +9,7 @@ components:
       remote: https://github.com/epam/hub-azure-components.git
       subDir: aks
   hooks:
-  - file: bin/set-kubeconfig
+  - file: bin/set-hub-kubeconfig
     triggers: [post-deploy]
 
 - name: cert-manager
@@ -53,7 +53,6 @@ components:
   depends:
     - aks         
 
-
 requires:
 - azure
 
@@ -63,3 +62,4 @@ extensions:
   configure:
   - azure  
   - env
+  - bin/init-hub-kubeconfig
