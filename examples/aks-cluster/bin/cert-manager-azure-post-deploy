@@ -7,7 +7,7 @@ fi
 
 TENANT_ID=$(az account show --query tenantId -o tsv)
 
-cat <<EOF >"../${HUB_COMPONENT_DIR}/issuer.yaml"
+cat <<EOF | kubectl apply -f - 
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -31,5 +31,3 @@ spec:
           hostedZoneName: "${HUB_DOMAIN_NAME}"
           environment: AzurePublicCloud
 EOF
-
-kubectl apply -f "../${HUB_COMPONENT_DIR}/issuer.yaml"
