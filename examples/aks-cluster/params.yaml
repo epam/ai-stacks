@@ -51,7 +51,8 @@ parameters:
 - name: nginx
   parameters:
   - name: loadBalancerSourceRanges
-    brief: IP range from where public Nginx LoadBalancer should be accessible 
-    default: "0.0.0.0/0"
+    brief: |
+      IP ranges from where public Nginx LoadBalancer should be accessible
+      The field supports space-separated list of values
     fromEnv: WHITELISTED_CIDR
 

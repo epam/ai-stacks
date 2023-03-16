@@ -47,9 +47,6 @@ components:
       remote: https://github.com/epam/kubeflow-components.git
       subDir: nginx-ingress
       ref: develop
-  hooks: 
-  - file: bin/nginx-azure-pre-deploy
-    triggers: [pre-deploy]             
   depends:
     - aks         
 
