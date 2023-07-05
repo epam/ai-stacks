@@ -9,7 +9,6 @@ requires:
   - kubernetes
 
 parameters:
-- name: dns.domain
 - name: ingress.protocol
 - name: ingress.hosts
 - name: bucket.endpoint

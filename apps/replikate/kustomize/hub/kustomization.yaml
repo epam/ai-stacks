@@ -17,4 +17,3 @@ configMapGenerator:
   - configs/argo-repositories.yaml
   - configs/pd-pipeline.yaml
   - configs/pd-minio.yaml
-  - configs/pd-ingress.yaml
